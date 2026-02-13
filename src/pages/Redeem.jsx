@@ -26,13 +26,24 @@ function Redeem() {
         return
       }
 
-      // 1. 查找激活码
-      const { data: activationCode, error: findError } = await supabase
-        .from('activation_codes')
-        .select('*')
-        .eq('code', code.trim())
-        .eq('is_used', false)
-        .single()
+      //1. 查找激活码（忽略大小写、去除空格）
+const cleanCode = code.trim().toUpperCase()
+console.log('正在兑换激活码:', cleanCode) // 调试用
+
+const { data: activationCode, error: findError } = await supabase
+  .from('activation_codes')
+  .select('*')
+  .eq('code', cleanCode)
+  .eq('is_used', false)
+  .maybeSingle() // 使用 maybeSingle 而不是 single
+
+if (findError) {
+  console.error('查询激活码错误:', findError)
+}
+
+if (!activationCode) {
+  throw new Error('无效的激活码或已被使用')
+}
 
       if (findError || !activationCode) {
         throw new Error('无效的激活码或已被使用')
