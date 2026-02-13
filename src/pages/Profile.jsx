@@ -86,32 +86,34 @@ function Profile() {
         </div>
 
         {/* 会员状态卡片 */}
-        <div className="bg-white rounded-2xl shadow-md p-6 mb-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-lg font-semibold text-gray-800 mb-1">
-                会员状态
-              </h2>
-              {profile?.membership_valid_until ? (
-                <p className="text-sm text-gray-600">
-                  会员有效期至：{new Date(profile.membership_valid_until).toLocaleDateString('zh-CN')}
-                </p>
-              ) : (
-                <p className="text-sm text-gray-600">
-                  暂无会员资格，完成7天挑战即可获得30天免费会员
-                </p>
-              )}
-            </div>
-            {!profile?.membership_valid_until && (
-              <button
-                onClick={() => navigate('/challenge')}
-                className="bg-wimbledon-grass hover:bg-wimbledon-green text-white px-4 py-2 rounded-lg text-sm transition-colors"
-              >
-                开始挑战
-              </button>
-            )}
-          </div>
-        </div>
+<div className="bg-white rounded-2xl shadow-md p-6 mb-6">
+  <div className="flex items-center justify-between">
+    <div>
+      <h2 className="text-lg font-semibold text-gray-800 mb-1">
+        会员状态
+      </h2>
+      {profile?.membership_valid_until ? (
+        <p className="text-sm text-gray-600">
+          会员有效期至：{new Date(profile.membership_valid_until).toLocaleDateString('zh-CN')}
+        </p>
+      ) : (
+        <p className="text-sm text-gray-600">
+          {profile?.challenge_status === 'success' 
+            ? '恭喜完成挑战！报告生成后可获得30天免费会员'
+            : '暂无会员资格，完成7天挑战即可获得30天免费会员'}
+        </p>
+      )}
+    </div>
+    {!profile?.membership_valid_until && (
+      <button
+        onClick={() => navigate('/challenge')}
+        className="bg-wimbledon-grass hover:bg-wimbledon-green text-white px-4 py-2 rounded-lg text-sm transition-colors"
+      >
+        {profile?.challenge_status === 'in_progress' ? '查看挑战' : '开始挑战'}
+      </button>
+    )}
+  </div>
+</div>
 
         {/* 网球档案卡片 */}
         <div className="bg-white rounded-2xl shadow-md p-6 mb-6">
