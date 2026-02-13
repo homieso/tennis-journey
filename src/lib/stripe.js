@@ -3,9 +3,8 @@
 
 import { loadStripe } from '@stripe/stripe-js'
 
-// 测试用的公开密钥（可公开）
-// 这是 Stripe 官方测试密钥，不会扣款
-export const STRIPE_PUBLISHABLE_KEY = 'pk_test_TYooMQauvdEDq54NiTphI7jx'
+//pk_test_51T0GmBERuQ9ab9xne9pUeoE0wUFUb5MFyzaWbs1nQwJ9kDLs6yA5qTKGTtPD7ViTJ4GGrPGvWrHKQXPRDyzfFEyj00cP4BJaZ0
+export const STRIPE_PUBLISHABLE_KEY = 'pk_test_你的密钥'
 
 // 加载 Stripe 实例
 export const getStripe = () => {
@@ -13,10 +12,9 @@ export const getStripe = () => {
 }
 
 // 订阅价格 ID（测试用）
-// 你需要在自己 Stripe 后台创建实际的价格
 export const MONTHLY_PRICE_ID = 'price_monthly_test'
 
-// 创建 Stripe 结账会话（通过 Supabase Edge Function）
+// 创建 Stripe 结账会话
 export const createCheckoutSession = async (userId, priceId) => {
   try {
     const response = await fetch(
