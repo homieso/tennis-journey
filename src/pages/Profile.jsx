@@ -88,9 +88,14 @@ function Profile() {
         会员状态
       </h2>
       {profile?.membership_valid_until ? (
-        <p className="text-sm text-gray-600">
-          会员有效期至：{new Date(profile.membership_valid_until).toLocaleDateString('zh-CN')}
-        </p>
+        <div>
+          <p className="text-sm text-gray-600">
+            🎾 会员有效期至：{new Date(profile.membership_valid_until).toLocaleDateString('zh-CN')}
+          </p>
+          <p className="text-xs text-gray-500 mt-1">
+            到期后可续费，继续享受AI球探报告服务
+          </p>
+        </div>
       ) : (
         <p className="text-sm text-gray-600">
           {profile?.challenge_status === 'success' 
@@ -99,14 +104,33 @@ function Profile() {
         </p>
       )}
     </div>
-    {!profile?.membership_valid_until && (
-      <button
-        onClick={() => navigate('/challenge')}
-        className="bg-wimbledon-grass hover:bg-wimbledon-green text-white px-4 py-2 rounded-lg text-sm transition-colors"
-      >
-        {profile?.challenge_status === 'in_progress' ? '查看挑战' : '开始挑战'}
-      </button>
-    )}
+    
+    {/* 会员操作按钮组 */}
+    <div className="flex space-x-2">
+      {profile?.membership_valid_until ? (
+        <>
+          <button
+            onClick={() => navigate('/pricing')}
+            className="bg-wimbledon-grass hover:bg-wimbledon-green text-white px-4 py-2 rounded-lg text-sm transition-colors"
+          >
+            续费会员
+          </button>
+          <button
+            onClick={() => navigate('/redeem')}
+            className="bg-white border border-wimbledon-grass text-wimbledon-grass hover:bg-wimbledon-grass/5 px-4 py-2 rounded-lg text-sm transition-colors"
+          >
+            兑换激活码
+          </button>
+        </>
+      ) : (
+        <button
+          onClick={() => navigate('/challenge')}
+          className="bg-wimbledon-grass hover:bg-wimbledon-green text-white px-4 py-2 rounded-lg text-sm transition-colors"
+        >
+          {profile?.challenge_status === 'in_progress' ? '查看挑战' : '开始挑战'}
+        </button>
+      )}
+    </div>
   </div>
 </div>
 
