@@ -30,29 +30,35 @@ function Onboarding() {
     shortTermGoal: ''
   })
 
-  // 检查是否已填写档案
-  useEffect(() => {
-    checkUserAndProfile()
-  }, [])
+  // 检查是否已填写档案 + 识别编辑模式
+useEffect(() => {
+  const params = new URLSearchParams(window.location.search)
+  const editMode = params.get('edit') === 'true'
+  checkUserAndProfile(editMode)
+}, [])
 
-  const checkUserAndProfile = async () => {
-    const { user } = await getCurrentUser()
-    if (!user) {
-      navigate('/login')
-      return
-    }
-    
-    setUser(user)
-    
-    // 检查是否已存在档案
-    const { exists } = await checkProfileExists(user.id)
-    setProfileExists(exists)
-    
-    // 如果已填写档案，加载现有数据（编辑模式）
-    if (exists) {
-      loadProfileData(user.id)
+const checkUserAndProfile = async (editMode = false) => {
+  const { user } = await getCurrentUser()
+  if (!user) {
+    navigate('/login')
+    return
+  }
+  
+  setUser(user)
+  
+  // 检查是否已存在档案
+  const { exists } = await checkProfileExists(user.id)
+  setProfileExists(exists)
+  
+  if (exists) {
+    // 如果是编辑模式，加载数据但不跳转
+    await loadProfileData(user.id)
+    if (!editMode) {
+      // 非编辑模式下，已填写档案的用户跳转到挑战页
+      navigate('/challenge')
     }
   }
+}
 
   // 加载现有档案数据（用于编辑模式）
   const loadProfileData = async (userId) => {
