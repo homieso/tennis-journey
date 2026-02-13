@@ -14,6 +14,7 @@ import ScoutReport from './pages/ScoutReport'
 import Pricing from './pages/Pricing'
 import Redeem from './pages/Redeem'
 import Community from './pages/Community'
+import BottomNav from './components/BottomNav'
 
 // 首页组件（带档案检测）
 function Home() {
@@ -73,7 +74,7 @@ function Home() {
   )
 }
 
-// 受保护的路由组件
+// 受保护的路由组件 - 自动添加底部导航
 function ProtectedRoute({ children }) {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -95,6 +96,16 @@ function ProtectedRoute({ children }) {
       </div>
     )
   }
+
+  return user ? (
+    <>
+      {children}
+      <BottomNav />
+    </>
+  ) : (
+    <Navigate to="/login" />
+  )
+}
 
   return user ? children : <Navigate to="/login" />
 }

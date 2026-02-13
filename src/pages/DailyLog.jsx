@@ -222,31 +222,148 @@ function DailyLog() {
               </div>
             )}
 
-            {/* 示例模板 - 悬停提示 + 点击填充 */}
-            <div className="bg-wimbledon-grass/5 rounded-xl p-4">
-              <div className="flex items-start">
-                <span className="text-wimbledon-grass mr-2">📝</span>
-                <div className="flex-1">
-                  <span className="font-medium text-gray-700">示例模板：</span>
-                  <span className="text-gray-600 text-sm ml-1">{exampleTemplate}</span>
-                </div>
-                <div className="relative group ml-2">
-                  <span className="text-gray-400 cursor-help hover:text-wimbledon-grass transition-colors text-lg">ⓘ</span>
-                  <div className="absolute bottom-full right-0 mb-2 w-64 hidden group-hover:block bg-gray-800 text-white text-xs rounded-lg p-3 z-20 shadow-lg">
-                    <p className="font-medium mb-1">📋 打卡示例</p>
-                    <p className="opacity-90">分腿垫步练习3组</p>
-                    <p className="opacity-90">正手击球50次</p>
-                    <p className="opacity-90">发球练习20分钟</p>
-                    <button
-                      type="button"
-                      onClick={fillTemplate}
-                      className="mt-2 w-full bg-wimbledon-grass hover:bg-wimbledon-green text-white text-xs py-1.5 rounded-lg transition-colors"
-                    >
-                      点击填充模板
-                    </button>
-                  </div>
-                </div>
-              </div>
+            {/* 官方示例模板 - 悬停缩略图 + 点击放大 */}
+<div className="bg-wimbledon-grass/5 rounded-xl p-4">
+  <div className="flex items-start">
+    <span className="text-wimbledon-grass mr-2">📋</span>
+    <div className="flex-1">
+      <span className="font-medium text-gray-700">官方示例模板：</span>
+      <span className="text-gray-600 text-sm ml-1">管理员打卡示范</span>
+    </div>
+    
+   {/* 悬停预览区域 */}
+<div className="relative group ml-2">
+  <span className="text-gray-400 cursor-help hover:text-wimbledon-grass transition-colors text-lg">ⓘ</span>
+  
+  {/* 悬停弹出的缩略图预览 */}
+  <div className="absolute bottom-full right-0 mb-2 w-80 hidden group-hover:block bg-white rounded-xl shadow-xl border border-gray-200 p-4 z-30">
+    <div className="flex items-center justify-between mb-2">
+      <h4 className="font-semibold text-wimbledon-green text-sm">📸 管理员打卡示例</h4>
+      <span className="text-xs bg-wimbledon-grass/10 text-wimbledon-green px-2 py-1 rounded-full">
+        审核标准参考
+      </span>
+    </div>
+    
+    {/* 三张缩略图 - 等你上传后替换URL */}
+    <div className="grid grid-cols-3 gap-2 mb-3">
+      <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden border border-gray-200 flex items-center justify-center text-gray-400 text-xs">
+        照片1
+      </div>
+      <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden border border-gray-200 flex items-center justify-center text-gray-400 text-xs">
+        照片2
+      </div>
+      <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden border border-gray-200 flex items-center justify-center text-gray-400 text-xs">
+        照片3
+      </div>
+    </div>
+    
+    {/* 示例文字 - 用你真实的训练内容 */}
+    <div className="bg-gray-50 rounded-lg p-3 text-xs text-gray-600">
+      <span className="font-medium text-gray-700">📝 训练内容：</span>
+      分腿垫步练习3组，正手击球50次，发球练习20分钟
+    </div>
+    
+    {/* 查看大图按钮 */}
+    <button
+      type="button"
+      onClick={() => {
+        document.getElementById('example-modal').classList.remove('hidden')
+      }}
+      className="mt-3 w-full bg-wimbledon-grass hover:bg-wimbledon-green text-white text-xs py-2 rounded-lg transition-colors"
+    >
+      🖼️ 点击查看完整示例
+    </button>
+  </div>
+</div>
+</div>
+
+{/* 示例模板放大模态框 */}
+<div id="example-modal" className="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center p-4" onClick={(e) => {
+  if (e.target === e.currentTarget) {
+    document.getElementById('example-modal').classList.add('hidden')
+  }
+}}>
+  <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6">
+    <div className="flex items-center justify-between mb-4">
+      <h3 className="font-wimbledon text-xl font-bold text-wimbledon-green">
+        管理员打卡示例
+      </h3>
+      <button
+        onClick={() => document.getElementById('example-modal').classList.add('hidden')}
+        className="text-gray-500 hover:text-gray-700"
+      >
+        ✕
+      </button>
+    </div>
+    
+    <p className="text-sm text-gray-500 mb-4">
+      这是管理员提供的审核标准参考。上传符合示例质量的照片和文字，有助于更快通过审核。
+    </p>
+    
+    {/* 三张大图 */}
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <div className="space-y-2">
+        <div className="aspect-square bg-gray-100 rounded-xl overflow-hidden border border-gray-200">
+          <img 
+            src="/examples/example-1.jpg" 
+            alt="示例1"
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              e.target.src = 'https://via.placeholder.com/600x600?text=示例1'
+            }}
+          />
+        </div>
+        <p className="text-xs text-gray-500 text-center">角度1：分腿垫步</p>
+      </div>
+      <div className="space-y-2">
+        <div className="aspect-square bg-gray-100 rounded-xl overflow-hidden border border-gray-200">
+          <img 
+            src="/examples/example-2.jpg" 
+            alt="示例2"
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              e.target.src = 'https://via.placeholder.com/600x600?text=示例2'
+            }}
+          />
+        </div>
+        <p className="text-xs text-gray-500 text-center">角度2：正手击球</p>
+      </div>
+      <div className="space-y-2">
+        <div className="aspect-square bg-gray-100 rounded-xl overflow-hidden border border-gray-200">
+          <img 
+            src="/examples/example-3.jpg" 
+            alt="示例3"
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              e.target.src = 'https://via.placeholder.com/600x600?text=示例3'
+            }}
+          />
+        </div>
+        <p className="text-xs text-gray-500 text-center">角度3：发球练习</p>
+      </div>
+    </div>
+    
+    {/* 示例文字 */}
+    <div className="bg-gray-50 rounded-xl p-4">
+      <h4 className="font-medium text-gray-800 mb-2 flex items-center">
+        <span className="text-wimbledon-grass mr-2">📝</span>
+        训练心得示例
+      </h4>
+      <p className="text-gray-700 text-sm bg-white rounded-lg p-3 border border-gray-200">
+        分腿垫步练习3组，每组15次；正手击球50次，重点练习斜线；发球练习20分钟，一发成功率约60%。
+      </p>
+    </div>
+    
+    <div className="mt-6 text-right">
+      <button
+        onClick={() => document.getElementById('example-modal').classList.add('hidden')}
+        className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-2 rounded-lg text-sm transition-colors"
+      >
+        关闭
+      </button>
+    </div>
+  </div>
+</div>
             </div>
 
             {/* 图片上传区域 */}

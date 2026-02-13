@@ -110,7 +110,7 @@ function Redeem() {
   }
 
   return (
-    <div className="min-h-screen bg-wimbledon-white py-12 px-4">
+    <div className="min-h-screen bg-wimbledon-white py-12 px-4 pb-24 pb-24">
       <div className="max-w-md mx-auto">
         {/* 头部 */}
         <button

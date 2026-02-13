@@ -170,7 +170,7 @@ function Onboarding() {
   ]
 
   return (
-    <div className="min-h-screen bg-wimbledon-white py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-wimbledon-white py-12 px-4 sm:px-6 lg:px-8 pb-24 pb-24">
       <div className="max-w-2xl mx-auto">
         {/* 进度提示 */}
         <div className="mb-8 text-center">
