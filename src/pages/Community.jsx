@@ -112,9 +112,7 @@ function Community() {
             <h1 className="font-wimbledon text-xl font-bold text-wimbledon-green">
               社区广场
             </h1>
-            <Link to="/" className="text-gray-600 hover:text-wimbledon-green">
-              返回首页
-            </Link>
+            <div className="w-16"></div>
           </div>
           <p className="text-xs text-gray-400 mt-1">
             完成7天挑战的用户在这里分享他们的网球故事

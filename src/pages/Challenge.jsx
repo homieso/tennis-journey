@@ -150,9 +150,7 @@ function Challenge() {
             <h1 className="font-wimbledon text-xl font-bold text-wimbledon-green">
               Tennis Journey
             </h1>
-            <Link to="/profile" className="text-gray-600 hover:text-wimbledon-green">
-              我的主页
-            </Link>
+            <div className="w-16"></div>
           </div>
         </div>
       </div>

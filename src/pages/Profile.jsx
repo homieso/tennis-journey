@@ -68,12 +68,7 @@ function Profile() {
       <div className="max-w-4xl mx-auto">
         {/* 头部导航 */}
         <div className="flex items-center justify-between mb-6">
-          <button
-            onClick={() => navigate('/')}
-            className="text-gray-600 hover:text-wimbledon-green"
-          >
-            ← 返回首页
-          </button>
+          <div className="w-16"></div>
           <h1 className="font-wimbledon text-2xl font-bold text-wimbledon-green">
             个人主页
           </h1>
