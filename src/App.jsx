@@ -13,6 +13,7 @@ import Profile from './pages/Profile'
 import ScoutReport from './pages/ScoutReport'
 import Pricing from './pages/Pricing'
 import Redeem from './pages/Redeem'
+import Community from './pages/Community'
 
 // 首页组件（带档案检测）
 function Home() {
@@ -148,6 +149,11 @@ function App() {
             <Redeem />
           </ProtectedRoute>
         } />
+<Route path="/community" element={
+  <ProtectedRoute>
+    <Community />
+  </ProtectedRoute>
+} />
       </Routes>
     </BrowserRouter>
   )
