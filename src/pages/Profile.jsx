@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { getCurrentUser, signOut } from '../lib/auth'
+import { redirectToCustomerPortal } from '../lib/stripe'
 
 function Profile() {
   const navigate = useNavigate()
@@ -80,7 +81,7 @@ function Profile() {
           </button>
         </div>
 
-        {/* 会员状态卡片 */}
+       {/* 会员状态卡片 */}
 <div className="bg-white rounded-2xl shadow-md p-6 mb-6">
   <div className="flex items-center justify-between">
     <div>
@@ -116,8 +117,14 @@ function Profile() {
             续费会员
           </button>
           <button
-            onClick={() => navigate('/redeem')}
+            onClick={redirectToCustomerPortal}
             className="bg-white border border-wimbledon-grass text-wimbledon-grass hover:bg-wimbledon-grass/5 px-4 py-2 rounded-lg text-sm transition-colors"
+          >
+            管理订阅
+          </button>
+          <button
+            onClick={() => navigate('/redeem')}
+            className="bg-white border border-gray-300 text-gray-600 hover:bg-gray-50 px-4 py-2 rounded-lg text-sm transition-colors"
           >
             兑换激活码
           </button>
@@ -133,7 +140,6 @@ function Profile() {
     </div>
   </div>
 </div>
-
         {/* 网球档案卡片 */}
         <div className="bg-white rounded-2xl shadow-md p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
