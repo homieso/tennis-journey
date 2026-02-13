@@ -7,7 +7,8 @@ import { loadStripe } from '@stripe/stripe-js'
 export const STRIPE_PUBLISHABLE_KEY = 'pk_test_51T0GmBERuQ9ab9xne9pUeoE0wUFUb5MFyzaWbs1nQwJ9kDLs6yA5qTKGTtPD7ViTJ4GGrPGvWrHKQXPRDyzfFEyj00cP4BJaZ0'
 
 // 订阅价格 ID（需要替换成你在 Stripe 创建的实际 Price ID）
-export const MONTHLY_PRICE_ID = 'price_monthly_test'
+// 从环境变量读取 Price ID，如果没有则使用测试值
+export const MONTHLY_PRICE_ID = import.meta.env.VITE_STRIPE_PRICE_MONTHLY || 'price_monthly_test'
 
 // 客户门户 URL（你刚刚激活的）
 export const CUSTOMER_PORTAL_URL = 'https://billing.stripe.com/p/login/test_fZu5kD7NS2xudlU6h46sw01'

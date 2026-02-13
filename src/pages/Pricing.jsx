@@ -11,37 +11,45 @@ function Pricing() {
   const [loading, setLoading] = useState(false)
 
   const handleSubscribe = async () => {
-    setLoading(true)
-    
-    try {
-      const { user } = await getCurrentUser()
-      if (!user) {
-        navigate('/login')
-        return
-      }
-
-      // 1. 创建 Stripe Checkout 会话
-      const { sessionId, error } = await createCheckoutSession(
-        user.id,
-        MONTHLY_PRICE_ID
-      )
-
-      if (error) throw error
-
-      // 2. 跳转到 Stripe 结账页面
-      const stripe = await getStripe()
-      const { error: stripeError } = await stripe.redirectToCheckout({
-        sessionId,
-      })
-
-      if (stripeError) throw stripeError
-    } catch (error) {
-      console.error('订阅失败:', error)
-      alert('订阅失败，请稍后重试')
-    } finally {
-      setLoading(false)
+  setLoading(true)
+  
+  try {
+    const { user } = await getCurrentUser()
+    if (!user) {
+      navigate('/login')
+      return
     }
+
+    console.log('当前用户:', user.id)
+    console.log('Price ID:', MONTHLY_PRICE_ID)
+
+    if (!MONTHLY_PRICE_ID || MONTHLY_PRICE_ID === 'price_monthly_test') {
+      throw new Error('Price ID 未配置，请在 Vercel 添加 VITE_STRIPE_PRICE_MONTHLY')
+    }
+
+    // 1. 创建 Stripe Checkout 会话
+    const { sessionId, error } = await createCheckoutSession(
+      user.id,
+      MONTHLY_PRICE_ID
+    )
+
+    if (error) throw error
+    console.log('会话创建成功:', sessionId)
+
+    // 2. 跳转到 Stripe 结账页面
+    const stripe = await getStripe()
+    const { error: stripeError } = await stripe.redirectToCheckout({
+      sessionId,
+    })
+
+    if (stripeError) throw stripeError
+  } catch (error) {
+    console.error('订阅失败详细:', error)
+    alert(`订阅失败: ${error.message}`)
+  } finally {
+    setLoading(false)
   }
+}
 
   const handleActivationCode = () => {
     navigate('/redeem')
