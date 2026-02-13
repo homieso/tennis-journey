@@ -10,7 +10,7 @@ function Pricing() {
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
 
-  const handleSubscribe = async () => {
+const handleSubscribe = async () => {
   setLoading(true)
   
   try {
@@ -27,22 +27,18 @@ function Pricing() {
       throw new Error('Price ID 未配置，请在 Vercel 添加 VITE_STRIPE_PRICE_MONTHLY')
     }
 
-    // 1. 创建 Stripe Checkout 会话
-    const { sessionId, error } = await createCheckoutSession(
+    // 1. 创建 Stripe Checkout 会话，获取结账页面 URL
+    const { url, error } = await createCheckoutSession(
       user.id,
       MONTHLY_PRICE_ID
     )
 
     if (error) throw error
-    console.log('会话创建成功:', sessionId)
+    console.log('结账URL:', url)
 
-    // 2. 跳转到 Stripe 结账页面
-    const stripe = await getStripe()
-    const { error: stripeError } = await stripe.redirectToCheckout({
-      sessionId,
-    })
+    // 2. ✅ 直接跳转到 Stripe 结账页面
+    window.location.href = url
 
-    if (stripeError) throw stripeError
   } catch (error) {
     console.error('订阅失败详细:', error)
     alert(`订阅失败: ${error.message}`)

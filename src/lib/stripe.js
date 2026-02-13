@@ -29,9 +29,9 @@ export const createCheckoutSession = async (userId, priceId) => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          user_id: userId,
           price_id: priceId,
-          success_url: `${window.location.origin}/profile?session_id={CHECKOUT_SESSION_ID}`,
+          user_id: userId,
+          success_url: `${window.location.origin}/profile`,
           cancel_url: `${window.location.origin}/pricing`,
         }),
       }
@@ -40,10 +40,11 @@ export const createCheckoutSession = async (userId, priceId) => {
     const data = await response.json()
     if (data.error) throw new Error(data.error)
     
-    return { sessionId: data.sessionId, error: null }
+    // ✅ 直接返回 checkout URL，不再返回 sessionId
+    return { url: data.url, error: null }
   } catch (error) {
     console.error('创建结账会话失败:', error)
-    return { sessionId: null, error }
+    return { url: null, error }
   }
 }
 
