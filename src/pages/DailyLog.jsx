@@ -1,5 +1,5 @@
 // src/pages/DailyLog.jsx
-// 每日打卡页面 - 支持编辑、悬停模板
+// 每日打卡页面 - 支持编辑、点击示例
 
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
@@ -19,17 +19,17 @@ function DailyLog() {
   const [existingLog, setExistingLog] = useState(null)
   const [existingImageUrls, setExistingImageUrls] = useState([])
   const [isEditing, setIsEditing] = useState(false)
+  const [showExampleModal, setShowExampleModal] = useState(false)
 
   const exampleTemplate = '分腿垫步练习3组，正手击球50次，发球练习20分钟'
 
-  // 官方示例照片URL（硬编码，因为它们是固定的）
+  // 官方示例照片URL
   const examplePhotos = {
     forehand: 'https://finjgjjqcyjdaucyxchp.supabase.co/storage/v1/object/public/tennis-journey/examples/forehand_1.jpg',
     splitStep: 'https://finjgjjqcyjdaucyxchp.supabase.co/storage/v1/object/public/tennis-journey/examples/split_step_2.jpg',
     serve: 'https://finjgjjqcyjdaucyxchp.supabase.co/storage/v1/object/public/tennis-journey/examples/serve_3.jpg'
   }
 
-  // 检查今天是否已经打卡
   useEffect(() => {
     checkExistingLog()
   }, [day])
@@ -59,11 +59,6 @@ function DailyLog() {
     } catch (error) {
       console.error('检查打卡记录失败:', error)
     }
-  }
-
-  // 填充示例模板
-  const fillTemplate = () => {
-    setTextContent(exampleTemplate)
   }
 
   const handleImageChange = (e) => {
@@ -224,156 +219,104 @@ function DailyLog() {
               </div>
             )}
 
-            {/* 打卡示范 - 悬停预览 + 点击放大 */}
+            {/* 打卡示范 - 点击ⓘ打开模态框 */}
             <div className="bg-wimbledon-grass/5 rounded-xl p-4">
-              <div className="flex items-start">
-                <span className="text-wimbledon-grass mr-2">📋</span>
-                <div className="flex-1">
-                  <span className="font-medium text-gray-700">打卡示范：</span>
-                  <span className="text-gray-600 text-sm ml-1">管理员打卡示范</span>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <span className="text-wimbledon-grass mr-2">📋</span>
+                  <span className="font-medium text-gray-700">打卡示范</span>
                 </div>
                 
-                {/* 悬停预览区域 */}
-                <div className="relative group ml-2">
-                  <span className="text-gray-400 cursor-help hover:text-wimbledon-grass transition-colors text-lg">ⓘ</span>
+                {/* 点击区域：ⓘ + 文字 */}
+                <button
+                  type="button"
+                  onClick={() => setShowExampleModal(true)}
+                  className="flex items-center gap-1 text-wimbledon-green hover:text-wimbledon-grass transition-colors"
+                >
+                  <span className="text-lg">ⓘ</span>
+                  <span className="text-sm">点击查看</span>
+                </button>
+              </div>
+            </div>
+
+            {/* 示例模板放大模态框 */}
+            {showExampleModal && (
+              <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4" onClick={() => setShowExampleModal(false)}>
+                <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6" onClick={(e) => e.stopPropagation()}>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-wimbledon text-xl font-bold text-wimbledon-green">
+                      管理员打卡示范
+                    </h3>
+                    <button
+                      onClick={() => setShowExampleModal(false)}
+                      className="text-gray-500 hover:text-gray-700"
+                    >
+                      ✕
+                    </button>
+                  </div>
                   
-                  {/* 悬停弹出的缩略图预览 */}
-                  <div className="absolute bottom-full right-0 mb-2 w-80 hidden group-hover:block bg-white rounded-xl shadow-xl border border-gray-200 p-4 z-30">
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-semibold text-wimbledon-green text-sm">📸 管理员打卡示范</h4>
-                      <span className="text-xs bg-wimbledon-grass/10 text-wimbledon-green px-2 py-1 rounded-full">
-                        审核标准参考
-                      </span>
-                    </div>
-                    
-                    {/* 三张缩略图 - 按正确顺序：正手、垫步、发球 */}
-                    <div className="grid grid-cols-3 gap-2 mb-3">
-                      <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
+                  <p className="text-sm text-gray-500 mb-4">
+                    这是管理员提供的真实打卡示范。上传符合示例质量的照片和文字，有助于更快通过审核。
+                  </p>
+                  
+                  {/* 三张大图 */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div className="space-y-2">
+                      <div className="aspect-square bg-gray-100 rounded-xl overflow-hidden border border-gray-200">
                         <img 
                           src={examplePhotos.forehand}
                           alt="正手练习"
                           className="w-full h-full object-cover"
                         />
                       </div>
-                      <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
+                      <p className="text-xs text-gray-500 text-center">正手练习</p>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="aspect-square bg-gray-100 rounded-xl overflow-hidden border border-gray-200">
                         <img 
                           src={examplePhotos.splitStep}
                           alt="垫步练习"
                           className="w-full h-full object-cover"
                         />
                       </div>
-                      <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
+                      <p className="text-xs text-gray-500 text-center">垫步练习</p>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="aspect-square bg-gray-100 rounded-xl overflow-hidden border border-gray-200">
                         <img 
                           src={examplePhotos.serve}
                           alt="发球练习"
                           className="w-full h-full object-cover"
                         />
                       </div>
+                      <p className="text-xs text-gray-500 text-center">发球练习</p>
                     </div>
-                    
-                    {/* 示例文字 */}
-                    <div className="bg-gray-50 rounded-lg p-3 text-xs text-gray-600">
-                      <span className="font-medium text-gray-700">📝 训练内容：</span><br/>
-                      正手练习——右手持拍，充分侧身向前挥拍，确保击球点在身体前方。<br/>
-                      垫步练习——双腿站在边线，膝盖微弯，准备启动垫步。<br/>
-                      发球练习——右手持拍置于后背，“奖杯式”举拍，充分顶肘向前向上挥拍。
+                  </div>
+                  
+                  {/* 训练心得 */}
+                  <div className="bg-gray-50 rounded-xl p-4">
+                    <h4 className="font-medium text-gray-800 mb-2 flex items-center">
+                      <span className="text-wimbledon-grass mr-2">📝</span>
+                      训练心得
+                    </h4>
+                    <div className="text-gray-700 text-sm bg-white rounded-lg p-3 border border-gray-200 space-y-2">
+                      <p>• 正手练习——右手持拍，充分侧身向前挥拍，确保击球点在身体前方。</p>
+                      <p>• 垫步练习——双腿站在边线，膝盖微弯，准备启动垫步。</p>
+                      <p>• 发球练习——右手持拍置于后背，“奖杯式”举拍，充分顶肘向前向上挥拍。</p>
                     </div>
-                    
-                    {/* 查看大图按钮 */}
+                  </div>
+                  
+                  <div className="mt-6 text-right">
                     <button
-                      type="button"
-                      onClick={() => {
-                        document.getElementById('example-modal').classList.remove('hidden')
-                      }}
-                      className="mt-3 w-full bg-wimbledon-grass hover:bg-wimbledon-green text-white text-xs py-2 rounded-lg transition-colors"
+                      onClick={() => setShowExampleModal(false)}
+                      className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-2 rounded-lg text-sm transition-colors"
                     >
-                      🖼️ 点击查看完整示例
+                      关闭
                     </button>
                   </div>
                 </div>
               </div>
-            </div>
-
-            {/* 示例模板放大模态框 */}
-            <div id="example-modal" className="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center p-4" onClick={(e) => {
-              if (e.target === e.currentTarget) {
-                document.getElementById('example-modal').classList.add('hidden')
-              }
-            }}>
-              <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-wimbledon text-xl font-bold text-wimbledon-green">
-                    管理员打卡示范
-                  </h3>
-                  <button
-                    onClick={() => document.getElementById('example-modal').classList.add('hidden')}
-                    className="text-gray-500 hover:text-gray-700"
-                  >
-                    ✕
-                  </button>
-                </div>
-                
-                <p className="text-sm text-gray-500 mb-4">
-                  这是管理员提供的真实打卡示范。上传符合示例质量的照片和文字，有助于更快通过审核。
-                </p>
-                
-                {/* 三张大图 - 按正确顺序 */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                  <div className="space-y-2">
-                    <div className="aspect-square bg-gray-100 rounded-xl overflow-hidden border border-gray-200">
-                      <img 
-                        src={examplePhotos.forehand}
-                        alt="正手练习"
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <p className="text-xs text-gray-500 text-center">正手练习</p>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="aspect-square bg-gray-100 rounded-xl overflow-hidden border border-gray-200">
-                      <img 
-                        src={examplePhotos.splitStep}
-                        alt="垫步练习"
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <p className="text-xs text-gray-500 text-center">垫步练习</p>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="aspect-square bg-gray-100 rounded-xl overflow-hidden border border-gray-200">
-                      <img 
-                        src={examplePhotos.serve}
-                        alt="发球练习"
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <p className="text-xs text-gray-500 text-center">发球练习</p>
-                  </div>
-                </div>
-                
-                {/* 训练心得 */}
-                <div className="bg-gray-50 rounded-xl p-4">
-                  <h4 className="font-medium text-gray-800 mb-2 flex items-center">
-                    <span className="text-wimbledon-grass mr-2">📝</span>
-                    训练心得
-                  </h4>
-                  <div className="text-gray-700 text-sm bg-white rounded-lg p-3 border border-gray-200 space-y-2">
-                    <p>• 正手练习——右手持拍，充分侧身向前挥拍，确保击球点在身体前方。</p>
-                    <p>• 垫步练习——双腿站在边线，膝盖微弯，准备启动垫步。</p>
-                    <p>• 发球练习——右手持拍置于后背，“奖杯式”举拍，充分顶肘向前向上挥拍。</p>
-                  </div>
-                </div>
-                
-                <div className="mt-6 text-right">
-                  <button
-                    onClick={() => document.getElementById('example-modal').classList.add('hidden')}
-                    className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-2 rounded-lg text-sm transition-colors"
-                  >
-                    关闭
-                  </button>
-                </div>
-              </div>
-            </div>
+            )}
 
             {/* 图片上传区域 */}
             <div>
@@ -384,7 +327,6 @@ function DailyLog() {
                 </span>
               </label>
               
-              {/* 已上传的图片（编辑模式） */}
               {existingImageUrls.length > 0 && (
                 <div className="mb-4">
                   <p className="text-xs text-gray-500 mb-2">已上传照片：</p>
@@ -409,7 +351,6 @@ function DailyLog() {
                 </div>
               )}
 
-              {/* 新上传的图片预览 */}
               {previewUrls.length > 0 && (
                 <div className="mb-4">
                   <p className="text-xs text-gray-500 mb-2">新上传照片：</p>
@@ -434,7 +375,6 @@ function DailyLog() {
                 </div>
               )}
 
-              {/* 上传按钮 */}
               {images.length + existingImageUrls.length < 3 && (
                 <div
                   onClick={() => fileInputRef.current?.click()}
@@ -457,7 +397,6 @@ function DailyLog() {
               )}
             </div>
 
-            {/* 文字输入区域 */}
             <div>
               <label htmlFor="content" className="block text-sm font-medium text-gray-700 mb-2">
                 训练心得
@@ -481,7 +420,6 @@ function DailyLog() {
               </div>
             </div>
 
-            {/* 提交按钮 */}
             <div className="pt-4">
               <button
                 type="submit"
