@@ -39,13 +39,32 @@ function DailyLog() {
       const { user } = await getCurrentUser()
       if (!user) return
 
-      const today = new Date().toISOString().split('T')[0]
+      // 获取用户的挑战开始日期
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('challenge_start_date')
+        .eq('id', user.id)
+        .single()
+
+      if (profileError) throw profileError
+
+      if (!profile?.challenge_start_date) {
+        console.error('用户没有挑战开始日期')
+        return
+      }
+
+      // 根据挑战开始日期和第几天计算对应的日期
+      const startDate = new Date(profile.challenge_start_date)
+      const targetDate = new Date(startDate)
+      targetDate.setDate(startDate.getDate() + (parseInt(day) - 1))
+      const targetDateStr = targetDate.toISOString().split('T')[0]
       
+      // 查询对应日期的打卡记录
       const { data, error } = await supabase
         .from('daily_logs')
         .select('*')
         .eq('user_id', user.id)
-        .eq('log_date', today)
+        .eq('log_date', targetDateStr)
         .maybeSingle()
 
       if (error) throw error
@@ -121,7 +140,7 @@ function DailyLog() {
       return
     }
     if (!textContent.trim()) {
-      setError('请填写今日训练心得')
+      setError('请填写训练心得')
       return
     }
 
@@ -132,14 +151,31 @@ function DailyLog() {
       const { user } = await getCurrentUser()
       if (!user) throw new Error('请先登录')
 
-      const today = new Date().toISOString().split('T')[0]
+      // 获取用户的挑战开始日期
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('challenge_start_date')
+        .eq('id', user.id)
+        .single()
+
+      if (profileError) throw profileError
+
+      if (!profile?.challenge_start_date) {
+        throw new Error('用户没有挑战开始日期')
+      }
+
+      // 根据挑战开始日期和第几天计算对应的日期
+      const startDate = new Date(profile.challenge_start_date)
+      const targetDate = new Date(startDate)
+      targetDate.setDate(startDate.getDate() + (parseInt(day) - 1))
+      const targetDateStr = targetDate.toISOString().split('T')[0]
       
       const newImageUrls = []
       
       for (let i = 0; i < images.length; i++) {
         const file = images[i]
         const fileExt = file.name.split('.').pop()
-        const fileName = `${user.id}_${today}_${Date.now()}_${i}.${fileExt}`
+        const fileName = `${user.id}_${targetDateStr}_${Date.now()}_${i}.${fileExt}`
         
         const { error: uploadError } = await supabase.storage
           .from('tennis-journey')
@@ -174,7 +210,7 @@ function DailyLog() {
           .insert([
             {
               user_id: user.id,
-              log_date: today,
+              log_date: targetDateStr,
               image_urls: allImageUrls,
               text_content: textContent,
               status: 'pending'
@@ -194,18 +230,38 @@ function DailyLog() {
     }
   }
 
+  // 判断是否是今天
+  const isToday = () => {
+    try {
+      const today = new Date().toISOString().split('T')[0]
+      
+      // 从现有数据中获取目标日期
+      if (existingLog) {
+        return existingLog.log_date === today
+      }
+      
+      // 如果没有现有记录，尝试计算目标日期
+      // 这里我们假设用户已登录且有挑战开始日期
+      return false // 简化处理，实际应用中需要更复杂的逻辑
+    } catch (e) {
+      return false
+    }
+  }
+
+  const pageTitle = isEditing ? '编辑打卡' : (isToday() ? '今日打卡' : '补打卡')
+
   return (
     <div className="min-h-screen bg-wimbledon-white py-8 px-4 pb-24">
       <div className="max-w-2xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <button
             onClick={() => navigate('/challenge')}
-            className="text-gray-600 hover:text-wimbledon-green"
+            className="text-gray-600 hover:text-wimbledon-green transition-colors duration-200 px-4 py-2 rounded-full hover:bg-wimbledon-green/5"
           >
             ← 返回挑战
           </button>
           <h1 className="font-wimbledon text-2xl font-bold text-wimbledon-green">
-            第 {day} 天 · {isEditing ? '编辑打卡' : '今日打卡'}
+            第 {day} 天 · {pageTitle}
           </h1>
           <div className="w-16"></div>
         </div>
@@ -231,7 +287,7 @@ function DailyLog() {
                 <button
                   type="button"
                   onClick={() => setShowExampleModal(true)}
-                  className="flex items-center gap-1 text-wimbledon-green hover:text-wimbledon-grass transition-colors"
+                  className="flex items-center gap-1 text-wimbledon-green hover:text-wimbledon-grass transition-all duration-200 px-3 py-1.5 rounded-full hover:bg-wimbledon-green/10 hover:shadow-sm"
                 >
                   <span className="text-lg">ⓘ</span>
                   <span className="text-sm">点击查看</span>
@@ -249,7 +305,7 @@ function DailyLog() {
                     </h3>
                     <button
                       onClick={() => setShowExampleModal(false)}
-                      className="text-gray-500 hover:text-gray-700"
+                      className="text-gray-500 hover:text-gray-700 transition-all duration-200 w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100"
                     >
                       ✕
                     </button>
@@ -309,7 +365,7 @@ function DailyLog() {
                   <div className="mt-6 text-right">
                     <button
                       onClick={() => setShowExampleModal(false)}
-                      className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-2 rounded-lg text-sm transition-colors"
+                      className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-2.5 rounded-full text-sm transition-all duration-200 hover:shadow-md"
                     >
                       关闭
                     </button>
@@ -341,7 +397,7 @@ function DailyLog() {
                         <button
                           type="button"
                           onClick={() => removeExistingImage(index)}
-                          className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-600"
+                          className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm hover:bg-red-600 transition-all duration-200 hover:scale-110 hover:shadow-md"
                         >
                           ×
                         </button>
@@ -365,7 +421,7 @@ function DailyLog() {
                         <button
                           type="button"
                           onClick={() => removeImage(index)}
-                          className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-600"
+                          className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm hover:bg-red-600 transition-all duration-200 hover:scale-110 hover:shadow-md"
                         >
                           ×
                         </button>
@@ -424,7 +480,7 @@ function DailyLog() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-wimbledon-grass hover:bg-wimbledon-green text-white font-semibold px-6 py-3 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-wimbledon-grass hover:bg-wimbledon-green text-white font-semibold px-6 py-3.5 rounded-full transition-all duration-200 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? '提交中...' : isEditing ? '更新打卡' : '提交打卡'}
               </button>

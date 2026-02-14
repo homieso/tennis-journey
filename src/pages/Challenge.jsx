@@ -1,5 +1,16 @@
 // src/pages/Challenge.jsx
 // 7天挑战主页 - 修复版：移除周次，正确显示打卡状态
+// 
+// 主要功能：
+// 1. 显示7天挑战日历，每个天数根据解锁状态显示不同颜色
+// 2. 已解锁的天数（pending, approved, rejected）可以点击进入对应日期的打卡页面
+// 3. 显示当前待打卡的天数入口
+// 4. 显示挑战完成状态
+// 
+// 更新记录：
+// 2026-02-14: 修复日历逻辑，让所有已解锁的天数都可以点击
+// 2026-02-14: 点击后进入对应的 `/challenge/daily/{day}` 页面
+// 2026-02-14: 支持查看和编辑历史打卡记录
 
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
@@ -177,15 +188,23 @@ function Challenge() {
                     {day.date}
                     {day.isToday && <span className="ml-1 text-wimbledon-grass text-xs">今天</span>}
                   </div>
-                  <div 
+                  <button
+                    onClick={() => {
+                      // 只有已解锁的天数可以点击（pending, approved, rejected）
+                      if (day.status !== 'locked') {
+                        navigate(`/challenge/daily/${day.day}`)
+                      }
+                    }}
+                    disabled={day.status === 'locked'}
                     className={`
-                      aspect-square rounded-xl flex flex-col items-center justify-center p-2 md:p-4
+                      w-full aspect-square rounded-xl flex flex-col items-center justify-center p-2 md:p-4
                       transition-all duration-200
-                      ${day.status === 'approved' ? 'bg-wimbledon-grass/20 border-2 border-wimbledon-grass' : ''}
-                      ${day.status === 'pending' && !day.hasLog ? 'bg-white border-2 border-wimbledon-grass shadow-sm' : ''}
-                      ${day.status === 'pending' && day.hasLog ? 'bg-wimbledon-grass/10 border border-wimbledon-grass' : ''}
-                      ${day.status === 'locked' ? 'bg-gray-100 border border-gray-200 opacity-50' : ''}
-                      ${day.status === 'rejected' ? 'bg-red-50 border-2 border-red-300' : ''}
+                      ${day.status === 'approved' ? 'bg-wimbledon-grass/20 border-2 border-wimbledon-grass hover:bg-wimbledon-grass/30' : ''}
+                      ${day.status === 'pending' && !day.hasLog ? 'bg-white border-2 border-wimbledon-grass shadow-sm hover:shadow-md hover:bg-wimbledon-grass/5' : ''}
+                      ${day.status === 'pending' && day.hasLog ? 'bg-wimbledon-grass/10 border border-wimbledon-grass hover:bg-wimbledon-grass/20' : ''}
+                      ${day.status === 'locked' ? 'bg-gray-100 border border-gray-200 opacity-50 cursor-not-allowed' : ''}
+                      ${day.status === 'rejected' ? 'bg-red-50 border-2 border-red-300 hover:bg-red-100' : ''}
+                      ${day.status !== 'locked' ? 'cursor-pointer hover:scale-[1.02] active:scale-[0.98]' : ''}
                     `}
                   >
                     <span className="text-lg md:text-2xl font-bold mb-1">
@@ -206,7 +225,7 @@ function Challenge() {
                     {day.status === 'rejected' && (
                       <span className="text-[10px] md:text-xs text-red-500">已拒绝</span>
                     )}
-                  </div>
+                  </button>
                 </div>
               ))}
             </div>

@@ -159,6 +159,10 @@ function Profile() {
               <p className="text-sm font-medium">{profile?.gender || '未设置'}</p>
             </div>
             <div>
+              <p className="text-xs text-gray-500">年龄</p>
+              <p className="text-sm font-medium">{profile?.age ? `${profile.age}岁` : '未设置'}</p>
+            </div>
+            <div>
               <p className="text-xs text-gray-500">球龄</p>
               <p className="text-sm font-medium">{profile?.playing_years || 0}年</p>
             </div>
@@ -167,12 +171,28 @@ function Profile() {
               <p className="text-sm font-medium">{profile?.self_rated_ntrp || '未设置'}</p>
             </div>
             <div>
+              <p className="text-xs text-gray-500">地区</p>
+              <p className="text-sm font-medium">{profile?.location || '未设置'}</p>
+            </div>
+            <div>
               <p className="text-xs text-gray-500">偶像</p>
               <p className="text-sm font-medium">{profile?.idol || '未设置'}</p>
             </div>
             <div className="col-span-2">
               <p className="text-xs text-gray-500">网球风格</p>
               <p className="text-sm font-medium">{profile?.tennis_style || '未设置'}</p>
+            </div>
+            <div className="col-span-2">
+              <p className="text-xs text-gray-500">装备</p>
+              <p className="text-sm font-medium">{profile?.equipment || '未设置'}</p>
+            </div>
+            <div className="col-span-2">
+              <p className="text-xs text-gray-500">伤病历史</p>
+              <p className="text-sm font-medium">{profile?.injury_history || '无'}</p>
+            </div>
+            <div className="col-span-2">
+              <p className="text-xs text-gray-500">短期目标</p>
+              <p className="text-sm font-medium">{profile?.short_term_goal || '未设置'}</p>
             </div>
           </div>
         </div>

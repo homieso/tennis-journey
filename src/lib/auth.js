@@ -144,6 +144,11 @@ export const updateProfile = async (userId, profileData) => {
           self_rated_ntrp: parseFloat(profileData.selfRatedNtrp) || 3.0,
           idol: profileData.idol || '',
           tennis_style: profileData.tennisStyle || '',
+          age: profileData.age ? parseInt(profileData.age) : null,
+          location: profileData.location || '',
+          equipment: profileData.equipment || '',
+          injury_history: profileData.injuryHistory || '',
+          short_term_goal: profileData.shortTermGoal || '',
           updated_at: new Date(),
         })
         .eq('id', userId)
@@ -162,6 +167,11 @@ export const updateProfile = async (userId, profileData) => {
             self_rated_ntrp: parseFloat(profileData.selfRatedNtrp) || 3.0,
             idol: profileData.idol || '',
             tennis_style: profileData.tennisStyle || '',
+            age: profileData.age ? parseInt(profileData.age) : null,
+            location: profileData.location || '',
+            equipment: profileData.equipment || '',
+            injury_history: profileData.injuryHistory || '',
+            short_term_goal: profileData.shortTermGoal || '',
             challenge_status: 'not_started',
             created_at: new Date(),
             updated_at: new Date(),
