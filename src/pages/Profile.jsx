@@ -248,23 +248,49 @@ function Profile() {
     try {
       setUploading(true)
       const { user } = await getCurrentUser()
-      if (!user) return
+      if (!user) {
+        alert('请先登录')
+        return
+      }
+
+      console.log('头像上传开始，用户ID:', user.id, '文件:', file.name, '大小:', file.size, '类型:', file.type)
 
       const fileExt = file.name.split('.').pop()
       const fileName = `${user.id}-${Date.now()}.${fileExt}`
       const filePath = `avatars/${fileName}`
+      
+      console.log('文件路径:', filePath)
+
+      // 检查文件大小（限制为5MB）
+      if (file.size > 5 * 1024 * 1024) {
+        throw new Error('文件大小超过5MB限制')
+      }
+
+      // 检查文件类型
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+      if (!allowedTypes.includes(file.type)) {
+        throw new Error('不支持的文件类型，请上传 JPEG、PNG、WebP 或 GIF 图片')
+      }
 
       // 上传到 storage bucket 'avatars' (需提前创建)
+      console.log('正在上传到 Supabase Storage bucket: avatars')
       const { error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(filePath, file, { upsert: true })
 
-      if (uploadError) throw uploadError
+      if (uploadError) {
+        console.error('Supabase Storage 上传错误:', uploadError)
+        throw new Error(`上传失败: ${uploadError.message}`)
+      }
+
+      console.log('头像上传到Storage成功')
 
       // 获取公开 URL
       const { data: { publicUrl } } = supabase.storage
         .from('avatars')
         .getPublicUrl(filePath)
+      
+      console.log('头像公开URL:', publicUrl)
 
       // 更新 profiles 表的 avatar_url
       const { error: updateError } = await supabase
@@ -272,14 +298,20 @@ function Profile() {
         .update({ avatar_url: publicUrl })
         .eq('id', user.id)
 
-      if (updateError) throw updateError
+      if (updateError) {
+        console.error('更新数据库错误:', updateError)
+        throw new Error(`更新数据库失败: ${updateError.message}`)
+      }
+
+      console.log('数据库更新成功')
 
       // 更新本地状态
       setProfile(prev => ({ ...prev, avatar_url: publicUrl }))
       alert('头像上传成功！')
     } catch (error) {
-      console.error('头像上传失败:', error)
-      alert('头像上传失败，请重试')
+      console.error('头像上传失败 - 完整错误:', error)
+      console.error('错误堆栈:', error.stack)
+      alert(`头像上传失败: ${error.message}`)
     } finally {
       setUploading(false)
     }
