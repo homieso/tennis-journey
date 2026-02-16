@@ -43,10 +43,66 @@ function Home() {
   // 推荐卡片图片URL - 替换为网球相关图标/图片
   const recommendationImages = {
     video: 'https://img.youtube.com/vi/5arVdubK9Pg/maxresdefault.jpg', // 正手击球教学视频缩略图
-    brand: 'https://images.unsplash.com/photo-1595435934247-5d33b7f92c5c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80', // Wilson网球拍
-    event: 'https://images.unsplash.com/photo-1622279457486-62dcc4a431b6?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80', // 网球比赛（温网）
+    brand: '/icons/tennis-racquet.svg', // Wilson网球拍图标
+    event: '/icons/trophy.svg', // 温网奖杯图标
     plan: 'https://img.youtube.com/vi/VxrCA7S9b1U/maxresdefault.jpg'  // 网球体能训练视频缩略图
   }
+
+  // 推荐卡片数据数组，包含链接和标题
+  const recommendations = [
+    {
+      key: 'video',
+      titleKey: 'home.recommendations.video_title',
+      descKey: 'home.recommendations.video_desc',
+      ctaKey: 'home.recommendations.video_cta',
+      tagKey: 'home.recommendations.video_tag',
+      image: recommendationImages.video,
+      url: 'https://www.youtube.com/watch?v=5arVdubK9Pg',
+      bgClass: 'bg-white',
+      textClass: 'text-gray-900',
+      buttonClass: 'text-wimbledon-green hover:text-wimbledon-grass',
+      tagClass: 'bg-gradient-to-r from-wimbledon-green to-wimbledon-grass text-white'
+    },
+    {
+      key: 'brand',
+      titleKey: 'home.recommendations.brand_title',
+      descKey: 'home.recommendations.brand_desc',
+      ctaKey: 'home.recommendations.brand_cta',
+      tagKey: 'home.recommendations.brand_title',
+      image: recommendationImages.brand,
+      url: 'https://www.wilson.com',
+      bgClass: 'bg-gradient-to-br from-wimbledon-green to-wimbledon-grass',
+      textClass: 'text-white',
+      buttonClass: 'bg-white text-wimbledon-green hover:bg-gray-100',
+      tagClass: 'bg-white/20 backdrop-blur-sm text-white'
+    },
+    {
+      key: 'event',
+      titleKey: 'home.recommendations.event_title',
+      descKey: 'home.recommendations.event_desc',
+      ctaKey: 'home.recommendations.event_cta',
+      tagKey: 'home.recommendations.event_tag',
+      image: recommendationImages.event,
+      url: 'https://www.wimbledon.com',
+      bgClass: 'bg-white',
+      textClass: 'text-gray-900',
+      buttonClass: 'text-wimbledon-green hover:text-wimbledon-grass',
+      tagClass: 'bg-gradient-to-r from-orange-500 to-orange-600 text-white'
+    },
+    {
+      key: 'plan',
+      titleKey: 'home.recommendations.plan_title',
+      descKey: 'home.recommendations.plan_desc',
+      ctaKey: 'home.recommendations.plan_cta',
+      tagKey: 'home.recommendations.plan_tag',
+      image: recommendationImages.plan,
+      url: 'https://www.youtube.com/watch?v=VxrCA7S9b1U',
+      bgClass: 'bg-white',
+      textClass: 'text-gray-900',
+      buttonClass: 'text-wimbledon-green hover:text-wimbledon-grass',
+      tagClass: 'bg-gradient-to-r from-green-500 to-green-600 text-white'
+    }
+  ]
 
   useEffect(() => {
     checkProfileStatus()
@@ -563,110 +619,48 @@ function Home() {
           
           <div className="flex overflow-x-auto pb-6 -mx-4 px-4 scrollbar-hide">
             <div className="flex space-x-6">
-              <div className="flex-shrink-0 w-80">
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                  <div className="aspect-video relative overflow-hidden">
-                    <img
-                      src={recommendationImages.video}
-                      alt={t('home.recommendations.video_title')}
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
-                    <div className="absolute top-4 left-4">
-                      <div className="bg-gradient-to-r from-wimbledon-green to-wimbledon-grass text-white text-xs font-medium px-3 py-1 rounded-full">
-                        {t('home.recommendations.video_tag')}
+              {recommendations.map((item) => (
+                <div key={item.key} className="flex-shrink-0 w-80">
+                  <div
+                    className={`${item.bgClass} rounded-2xl shadow-sm border border-gray-100 overflow-hidden cursor-pointer`}
+                    onClick={() => window.open(item.url, '_blank')}
+                  >
+                    <div className="aspect-video relative overflow-hidden">
+                      <img
+                        src={item.image}
+                        alt={t(item.titleKey)}
+                        className={`w-full h-full ${item.image.endsWith('.svg') ? 'object-contain p-4' : 'object-cover'}`}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+                      <div className="absolute top-4 left-4">
+                        <div className={`${item.tagClass} text-xs font-medium px-3 py-1 rounded-full`}>
+                          {t(item.tagKey)}
+                        </div>
                       </div>
+                      {item.key === 'video' && (
+                        <div className="absolute bottom-4 left-4">
+                          <div className="w-12 h-12 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center">
+                            <span className="text-xl">▶️</span>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    <div className="absolute bottom-4 left-4">
-                      <div className="w-12 h-12 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center">
-                        <span className="text-xl">▶️</span>
-                      </div>
+                    <div className={`p-6 ${item.textClass}`}>
+                      <h3 className="font-bold mb-2">{t(item.titleKey)}</h3>
+                      <p className="text-sm opacity-90 mb-4">{t(item.descKey)}</p>
+                      <button
+                        className={`${item.buttonClass} font-medium text-sm px-4 py-2 rounded-lg`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          window.open(item.url, '_blank');
+                        }}
+                      >
+                        {t(item.ctaKey)}
+                      </button>
                     </div>
-                  </div>
-                  <div className="p-6">
-                    <h3 className="font-bold text-gray-900 mb-2">{t('home.recommendations.video_title')}</h3>
-                    <p className="text-sm text-gray-600 mb-4">{t('home.recommendations.video_desc')}</p>
-                    <button className="text-wimbledon-green hover:text-wimbledon-grass font-medium text-sm">
-                      {t('home.recommendations.video_cta')}
-                    </button>
                   </div>
                 </div>
-              </div>
-
-              <div className="flex-shrink-0 w-80">
-                <div className="bg-gradient-to-br from-wimbledon-green to-wimbledon-grass rounded-2xl shadow-sm overflow-hidden">
-                  <div className="aspect-video relative overflow-hidden">
-                    <img
-                      src={recommendationImages.brand}
-                      alt={t('home.recommendations.brand_title')}
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
-                    <div className="absolute top-4 left-4">
-                      <div className="bg-white/20 backdrop-blur-sm text-white text-xs font-medium px-3 py-1 rounded-full">
-                        {t('home.recommendations.brand_title')}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="p-6 text-white">
-                    <h3 className="font-bold mb-2">{t('home.recommendations.brand_title')}</h3>
-                    <p className="text-sm opacity-90 mb-4">{t('home.recommendations.brand_desc')}</p>
-                    <button className="bg-white text-wimbledon-green hover:bg-gray-100 font-medium text-sm px-4 py-2 rounded-lg">
-                      {t('home.recommendations.brand_cta')}
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex-shrink-0 w-80">
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                  <div className="aspect-video relative overflow-hidden">
-                    <img
-                      src={recommendationImages.event}
-                      alt={t('home.recommendations.event_title')}
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
-                    <div className="absolute top-4 left-4">
-                      <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white text-xs font-medium px-3 py-1 rounded-full">
-                        {t('home.recommendations.event_tag')}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="p-6">
-                    <h3 className="font-bold text-gray-900 mb-2">{t('home.recommendations.event_title')}</h3>
-                    <p className="text-sm text-gray-600 mb-4">{t('home.recommendations.event_desc')}</p>
-                    <button className="text-wimbledon-green hover:text-wimbledon-grass font-medium text-sm">
-                      {t('home.recommendations.event_cta')}
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex-shrink-0 w-80">
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                  <div className="aspect-video relative overflow-hidden">
-                    <img
-                      src={recommendationImages.plan}
-                      alt={t('home.recommendations.plan_title')}
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
-                    <div className="absolute top-4 left-4">
-                      <div className="bg-gradient-to-r from-green-500 to-green-600 text-white text-xs font-medium px-3 py-1 rounded-full">
-                        {t('home.recommendations.plan_tag')}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="p-6">
-                    <h3 className="font-bold text-gray-900 mb-2">{t('home.recommendations.plan_title')}</h3>
-                    <p className="text-sm text-gray-600 mb-4">{t('home.recommendations.plan_desc')}</p>
-                    <button className="text-wimbledon-green hover:text-wimbledon-grass font-medium text-sm">
-                      {t('home.recommendations.plan_cta')}
-                    </button>
-                  </div>
-                </div>
-              </div>
+              ))}
             </div>
           </div>
         </div>
