@@ -22,9 +22,19 @@ function Challenge() {
   const [days, setDays] = useState([])
   const [loading, setLoading] = useState(true)
   const [startDate, setStartDate] = useState(null)
+  const [profileUsername, setProfileUsername] = useState('')
+  const [challengeStatus, setChallengeStatus] = useState('') // in_progress | awaiting_report | success
+  const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
     fetchChallengeData()
+  }, [])
+
+  // 当用户从后台返回或切换回来时重新拉取，以便看到管理员审核后的最新状态（如第2天通过后第3天解锁）
+  useEffect(() => {
+    const onFocus = () => fetchChallengeData()
+    window.addEventListener('focus', onFocus)
+    return () => window.removeEventListener('focus', onFocus)
   }, [])
 
   const fetchChallengeData = async () => {
@@ -35,15 +45,17 @@ function Challenge() {
         return
       }
 
-      // 1. 获取用户档案，确定挑战开始日期
+      // 1. 获取用户档案，确定挑战开始日期与状态
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('challenge_start_date, challenge_status')
+        .select('challenge_start_date, challenge_status, username')
         .eq('id', user.id)
         .single()
 
       if (profileError) throw profileError
 
+      setChallengeStatus(profile?.challenge_status || 'in_progress')
+      setProfileUsername(profile?.username || user.email?.split('@')[0] || '')
       let startDateStr = profile?.challenge_start_date
       
       // 2. 如果用户从未开始挑战，初始化第一天
@@ -70,14 +82,20 @@ function Challenge() {
 
       if (logsError) throw logsError
 
-      // 4. 构建7天状态数组（基于开始日期，而非今天）
-      const start = new Date(startDateStr)
+      // 4. 构建7天状态数组（基于开始日期，使用本地日期避免时区错位）
+      const toLocalDateStr = (d) => {
+        const y = d.getFullYear()
+        const m = String(d.getMonth() + 1).padStart(2, '0')
+        const day = String(d.getDate()).padStart(2, '0')
+        return `${y}-${m}-${day}`
+      }
+      const start = new Date(startDateStr + 'T12:00:00') // 中午解析避免 UTC 漂移
       const daysArray = []
 
       for (let i = 0; i < 7; i++) {
         const currentDate = new Date(start)
         currentDate.setDate(start.getDate() + i)
-        const dateStr = currentDate.toISOString().split('T')[0]
+        const dateStr = toLocalDateStr(currentDate)
         
         // 查找当天的打卡记录
         const log = logs?.find(l => l.log_date === dateStr)
@@ -98,7 +116,7 @@ function Challenge() {
           // 检查前一天是否完成
           const prevDate = new Date(start)
           prevDate.setDate(start.getDate() + (i - 1))
-          const prevDateStr = prevDate.toISOString().split('T')[0]
+          const prevDateStr = toLocalDateStr(prevDate)
           const prevLog = logs?.find(l => l.log_date === prevDateStr)
           
           // 只有前一天是 approved，今天才解锁
@@ -108,7 +126,7 @@ function Challenge() {
         }
 
         // 标记今天（用于高亮或特殊提示）
-        const todayStr = new Date().toISOString().split('T')[0]
+        const todayStr = toLocalDateStr(new Date())
         if (dateStr === todayStr) {
           isToday = true
         }
@@ -132,14 +150,51 @@ function Challenge() {
     }
   }
 
+  // 当前日期是否已超出「开始日 + 7 天」范围（即第 8 天及以后）
+  const isPastSevenDays = () => {
+    if (!startDate) return false
+    const start = new Date(startDate + 'T12:00:00')
+    const day8 = new Date(start)
+    day8.setDate(start.getDate() + 7)
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    day8.setHours(0, 0, 0, 0)
+    return today >= day8
+  }
+
+  const handleFinalSubmit = async () => {
+    const { user } = await getCurrentUser()
+    if (!user) return
+    setSubmitting(true)
+    try {
+      await supabase
+        .from('profiles')
+        .update({ challenge_status: 'awaiting_report' })
+        .eq('id', user.id)
+      setChallengeStatus('awaiting_report')
+      const { error } = await supabase.functions.invoke('generate-scout-report', {
+        body: { user_id: user.id }
+      })
+      if (error) throw error
+    } catch (err) {
+      console.error('最终提交失败:', err)
+      alert('提交失败，请稍后重试')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  // 是否已最终提交（不可再修改）
+  const isLockedAfterSubmit = challengeStatus === 'awaiting_report' || challengeStatus === 'success'
+
   // 获取当前应该显示哪个天的打卡入口
   const getCurrentDayEntry = () => {
-    // 找到第一个状态为 pending 且没有打卡记录的日子
-    return days.find(day => 
-      day.status === 'pending' && 
-      !day.hasLog && 
-      day.logDate === new Date().toISOString().split('T')[0] // 必须是今天
-    ) || days.find(day => day.status === 'pending' && !day.hasLog) // 或者任何待打卡的日子
+    const todayStr = (() => {
+      const d = new Date()
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    })()
+    return days.find(day => day.status === 'pending' && !day.hasLog && day.logDate === todayStr)
+      || days.find(day => day.status === 'pending' && !day.hasLog)
   }
 
   if (loading) {
@@ -190,21 +245,21 @@ function Challenge() {
                   </div>
                   <button
                     onClick={() => {
-                      // 只有已解锁的天数可以点击（pending, approved, rejected）
+                      if (isLockedAfterSubmit) return
                       if (day.status !== 'locked') {
                         navigate(`/challenge/daily/${day.day}`)
                       }
                     }}
-                    disabled={day.status === 'locked'}
+                    disabled={day.status === 'locked' || isLockedAfterSubmit}
                     className={`
                       w-full aspect-square rounded-xl flex flex-col items-center justify-center p-2 md:p-4
                       transition-all duration-200
                       ${day.status === 'approved' ? 'bg-wimbledon-grass/20 border-2 border-wimbledon-grass hover:bg-wimbledon-grass/30' : ''}
                       ${day.status === 'pending' && !day.hasLog ? 'bg-white border-2 border-wimbledon-grass shadow-sm hover:shadow-md hover:bg-wimbledon-grass/5' : ''}
                       ${day.status === 'pending' && day.hasLog ? 'bg-wimbledon-grass/10 border border-wimbledon-grass hover:bg-wimbledon-grass/20' : ''}
-                      ${day.status === 'locked' ? 'bg-gray-100 border border-gray-200 opacity-50 cursor-not-allowed' : ''}
+                      ${day.status === 'locked' || isLockedAfterSubmit ? 'bg-gray-100 border border-gray-200 opacity-50 cursor-not-allowed' : ''}
                       ${day.status === 'rejected' ? 'bg-red-50 border-2 border-red-300 hover:bg-red-100' : ''}
-                      ${day.status !== 'locked' ? 'cursor-pointer hover:scale-[1.02] active:scale-[0.98]' : ''}
+                      ${day.status !== 'locked' && !isLockedAfterSubmit ? 'cursor-pointer hover:scale-[1.02] active:scale-[0.98]' : ''}
                     `}
                   >
                     <span className="text-lg md:text-2xl font-bold mb-1">
@@ -230,8 +285,8 @@ function Challenge() {
               ))}
             </div>
 
-            {/* 今日打卡入口 - 动态显示正确的待打卡天数 */}
-            {currentDayEntry && (
+            {/* 今日打卡入口 - 未超出7天且未最终提交时显示 */}
+            {!isLockedAfterSubmit && !isPastSevenDays() && currentDayEntry && (
               <div className="border-t border-gray-100 mt-6 pt-6">
                 <div className="bg-gradient-to-r from-wimbledon-grass/5 to-wimbledon-green/5 rounded-xl p-6">
                   <div className="flex items-center justify-between">
@@ -266,8 +321,65 @@ function Challenge() {
               </div>
             )}
 
-            {/* 挑战完成状态 */}
-            {days.every(day => day.status === 'approved') && (
+            {/* 超出7天：恭喜完成 + 最终提交（未提交时） */}
+            {isPastSevenDays() && challengeStatus === 'in_progress' && (
+              <div className="mt-6 p-6 bg-wimbledon-green/10 rounded-xl text-center">
+                <h3 className="font-bold text-wimbledon-green text-lg mb-2">
+                  恭喜 {profileUsername} 完成7天挑战
+                </h3>
+                <p className="text-gray-600 mb-4">
+                  请在最终提交前检查落实资料。
+                </p>
+                <button
+                  type="button"
+                  onClick={handleFinalSubmit}
+                  disabled={submitting}
+                  className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold px-8 py-3 rounded-xl transition-colors"
+                >
+                  {submitting ? '提交中...' : '最终提交'}
+                </button>
+              </div>
+            )}
+
+            {/* 已最终提交，报告生成中 */}
+            {challengeStatus === 'awaiting_report' && (
+              <div className="mt-6 p-6 bg-wimbledon-green/10 rounded-xl text-center">
+                <h3 className="font-bold text-wimbledon-green text-lg mb-2">
+                  恭喜完成7天挑战
+                </h3>
+                <p className="text-gray-600 mb-4">
+                  报告生成中，预计1-2分钟。生成完成后可在此查看。
+                </p>
+                <button
+                  type="button"
+                  onClick={() => navigate('/report')}
+                  className="bg-wimbledon-green hover:bg-wimbledon-grass text-white px-6 py-3 rounded-xl transition-colors"
+                >
+                  去查看报告
+                </button>
+              </div>
+            )}
+
+            {/* 报告已生成 */}
+            {challengeStatus === 'success' && (
+              <div className="mt-6 p-6 bg-wimbledon-green/10 rounded-xl text-center">
+                <h3 className="font-bold text-wimbledon-green text-lg mb-2">
+                  🎉 恭喜！你已完成7天挑战！
+                </h3>
+                <p className="text-gray-600 mb-4">
+                  你的球探报告已生成。
+                </p>
+                <Link
+                  to="/report"
+                  className="inline-block bg-wimbledon-green hover:bg-wimbledon-grass text-white px-6 py-3 rounded-xl transition-colors"
+                >
+                  查看我的球探报告
+                </Link>
+              </div>
+            )}
+
+            {/* 7天全部审核通过且未超出7天时（旧逻辑保留，与 success 二选一） */}
+            {!isPastSevenDays() && challengeStatus === 'in_progress' && days.every(day => day.status === 'approved') && (
               <div className="mt-6 p-6 bg-wimbledon-green/10 rounded-xl text-center">
                 <h3 className="font-bold text-wimbledon-green text-lg mb-2">
                   🎉 恭喜！你已完成7天挑战！

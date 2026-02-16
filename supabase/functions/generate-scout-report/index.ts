@@ -3,7 +3,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 serve(async (req) => {
   try {
-    const { user_id } = await req.json()
+    const { user_id, test_mode } = await req.json()
     
     const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
@@ -16,23 +16,65 @@ serve(async (req) => {
       .eq('id', user_id)
       .single()
 
-    if (profileError) throw profileError
-
-    // 2. 获取7天打卡记录
-    const { data: logs, error: logsError } = await supabase
-      .from('daily_logs')
-      .select('*')
-      .eq('user_id', user_id)
-      .eq('status', 'approved')
-      .order('log_date', { ascending: true })
-      .limit(7)
-
-    if (logsError) throw logsError
-    if (!logs || logs.length < 7) {
-      throw new Error('用户尚未完成7天打卡')
+    if (profileError) {
+      // 如果是测试模式，创建模拟档案
+      if (test_mode) {
+        console.log('测试模式：创建模拟用户档案')
+        const mockProfile = {
+          id: user_id,
+          email: 'test@example.com',
+          gender: '男',
+          playing_years: 5,
+          self_rated_ntrp: 3.5,
+          idol: '费德勒',
+          tennis_style: '全场型',
+          age: 28,
+          location: '北京',
+          equipment: 'Wilson Blade v9',
+          injury_history: '无',
+          short_term_goal: '提高比赛稳定性'
+        }
+        // 这里我们使用模拟数据，不实际保存到数据库
+      } else {
+        throw profileError
+      }
     }
 
-    // 3. 调用 DeepSeek API
+    // 2. 获取7天打卡记录
+    let logs = []
+    if (!test_mode) {
+      const { data: fetchedLogs, error: logsError } = await supabase
+        .from('daily_logs')
+        .select('*')
+        .eq('user_id', user_id)
+        .eq('status', 'approved')
+        .order('log_date', { ascending: true })
+        .limit(7)
+
+      if (logsError) throw logsError
+      if (!fetchedLogs || fetchedLogs.length < 7) {
+        throw new Error('用户尚未完成7天打卡')
+      }
+      logs = fetchedLogs
+    } else {
+      // 测试模式：创建模拟打卡记录
+      console.log('测试模式：创建模拟打卡记录')
+      logs = Array.from({ length: 7 }, (_, i) => ({
+        id: `test-log-${i}`,
+        user_id: user_id,
+        log_date: `2026-02-${String(i + 7).padStart(2, '0')}`,
+        text_content: `第${i + 1}天训练：正手练习${50 + i * 10}次，发球练习${20 + i * 5}分钟，垫步练习${3 + i}组`,
+        image_urls: [
+          'https://finjgjjqcyjdaucyxchp.supabase.co/storage/v1/object/public/tennis-journey/examples/forehand_1.jpg',
+          'https://finjgjjqcyjdaucyxchp.supabase.co/storage/v1/object/public/tennis-journey/examples/split_step_2.jpg'
+        ],
+        status: 'approved',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }))
+    }
+
+    // 3. 调用 DeepSeek API 生成结构化报告
     const deepseekResponse = await fetch('https://api.deepseek.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -44,26 +86,70 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `你是一位专业的网球教练和球探。根据用户7天的训练记录和个人档案，生成一份专业的"球探报告"。
+            content: `你是一位专业的网球教练和球探。根据用户7天的训练记录和个人档案，生成一份结构化的"球探报告"。
 
-报告必须包含以下三个部分，用清晰的标题分隔：
+请返回一个严格的JSON对象，包含以下字段：
 
-## 一、用户概况表
-- 风格特征：根据打球年限、自评等级、偏好风格总结
-- 技术特点：从7天打卡记录中提取3-5个关键词
-- 偶像影响：说明偶像对其打法的可能影响
+{
+  "cover": {
+    "title": "你的7天网球之旅报告",
+    "subtitle": "专属AI球探报告",
+    "date": "生成日期",
+    "user_name": "用户名"
+  },
+  "profile": {
+    "gender": "性别",
+    "playing_years": "球龄",
+    "ntrp": "NTRP自评",
+    "idol": "偶像",
+    "style": "网球风格",
+    "summary": "风格特征总结"
+  },
+  "stats": {
+    "total_days": 7,
+    "total_photos": 照片总数,
+    "latest_log_time": "最晚打卡时间",
+    "most_frequent_exercise": "最常练习项目",
+    "keywords": ["关键词1", "关键词2", "关键词3"]
+  },
+  "analysis": {
+    "strengths": ["优势1", "优势2", "优势3"],
+    "improvements": ["待改进1", "待改进2"],
+    "technical_insights": "技术分析总结"
+  },
+  "recommendations": [
+    {
+      "title": "建议标题",
+      "description": "建议描述",
+      "frequency": "训练频率",
+      "icon": "图标名称"
+    }
+  ],
+  "player_comparison": {
+    "player_name": "对比球员",
+    "similarities": ["相似点1", "相似点2", "相似点3"],
+    "differences": ["差距1", "差距2"],
+    "radar_chart": {
+      "serve": 0-100,
+      "baseline": 0-100,
+      "net_play": 0-100,
+      "movement": 0-100,
+      "tactics": 0-100
+    }
+  },
+  "achievements": {
+    "badge": "勋章名称",
+    "badge_description": "勋章描述",
+    "next_goal": "下一个目标"
+  }
+}
 
-## 二、个性化训练建议
-- 给出3条具体、可执行的训练建议
-- 每条建议包含：训练项目、训练频率、预期效果
-- 结合打卡记录中的具体内容
-
-## 三、球星相似度对比
-- 选择1位职业球员
-- 说明相似之处（技术、风格、特点）
-- 差距分析（哪些方面需要提升）
-
-语言风格：专业、激励、个性化。使用中文。`
+要求：
+1. 所有字段必须用中文
+2. 基于用户档案和打卡记录生成真实数据
+3. 关键词从打卡记录中提取
+4. 雷达图数值基于用户技术水平合理评估
+5. 对比球员选择与用户风格相似的职业球员`
           },
           {
             role: 'user',
@@ -73,15 +159,18 @@ serve(async (req) => {
 - NTRP自评：${profile.self_rated_ntrp}
 - 偶像：${profile.idol}
 - 风格：${profile.tennis_style}
+- 年龄：${profile.age || '未设置'}
+- 地区：${profile.location || '未设置'}
 
-7天训练记录摘要：
-${logs.map((log, i) => `第${i+1}天：${log.text_content}`).join('\n')}
+7天训练记录：
+${logs.map((log, i) => `第${i+1}天：${log.text_content} (照片数：${log.image_urls?.length || 0})`).join('\n')}
 
-请生成球探报告。`
+请生成结构化的球探报告JSON。`
           }
         ],
         temperature: 0.7,
-        max_tokens: 2000,
+        max_tokens: 3000,
+        response_format: { type: "json_object" }
       }),
     })
 
@@ -91,15 +180,49 @@ ${logs.map((log, i) => `第${i+1}天：${log.text_content}`).join('\n')}
       throw new Error(deepseekData.error.message)
     }
 
-    const reportContent = deepseekData.choices[0].message.content
+    const structuredReport = JSON.parse(deepseekData.choices[0].message.content)
+    
+    // 生成HTML内容用于向后兼容
+    const reportContent = `
+# ${structuredReport.cover.title}
 
-    // 4. 保存报告到数据库
+## 一、用户概况
+**风格特征**：${structuredReport.profile.summary}
+**技术特点**：${structuredReport.stats.keywords.join('、')}
+**偶像影响**：${structuredReport.profile.idol}
+
+## 二、数据分析
+**打卡统计**：${structuredReport.stats.total_days}天，${structuredReport.stats.total_photos}张照片
+**最常练习**：${structuredReport.stats.most_frequent_exercise}
+**技术优势**：${structuredReport.analysis.strengths.join('、')}
+
+## 三、训练建议
+${structuredReport.recommendations.map((rec, i) => `
+**${i+1}. ${rec.title}**
+${rec.description}
+频率：${rec.frequency}
+`).join('\n')}
+
+## 四、球星对比
+**对比球员**：${structuredReport.player_comparison.player_name}
+**相似之处**：${structuredReport.player_comparison.similarities.join('、')}
+**差距分析**：${structuredReport.player_comparison.differences.join('、')}
+
+## 五、成就与目标
+**获得勋章**：${structuredReport.achievements.badge}
+**勋章描述**：${structuredReport.achievements.badge_description}
+**下一个目标**：${structuredReport.achievements.next_goal}
+    `
+
+    // 4. 保存报告到数据库（包含结构化数据）
     const { data: report, error: insertError } = await supabase
       .from('scout_reports')
       .insert([
         {
           user_id: user_id,
           content_html: reportContent,
+          structured_data: structuredReport,
+          report_version: 'v2.0',
           generation_status: 'success',
           generated_at: new Date(),
         }
@@ -109,17 +232,42 @@ ${logs.map((log, i) => `第${i+1}天：${log.text_content}`).join('\n')}
 
     if (insertError) throw insertError
 
-    // 5. 更新用户挑战状态
+    // 5. 自动发布为社区首帖（产品设计：7天完成 → 报告生成 → 自动发布）
+    const postContent = `${structuredReport.cover?.title || '我的7天网球球探报告'} 🎾\n\n${structuredReport.profile?.summary || ''}`
+    const { data: post, error: postError } = await supabase
+      .from('posts')
+      .insert([
+        {
+          user_id: user_id,
+          report_id: report.id,
+          content: postContent,
+          created_at: new Date(),
+        }
+      ])
+      .select()
+      .single()
+
+    if (!postError && post) {
+      await supabase
+        .from('scout_reports')
+        .update({ is_published: true, published_at: new Date(), post_id: post.id })
+        .eq('id', report.id)
+    }
+
+    // 6. 更新用户挑战状态并发放30天会员
+    const thirtyDaysLater = new Date()
+    thirtyDaysLater.setDate(thirtyDaysLater.getDate() + 30)
     await supabase
       .from('profiles')
       .update({
         challenge_status: 'success',
         challenge_success_date: new Date(),
+        membership_valid_until: thirtyDaysLater,
       })
       .eq('id', user_id)
 
     return new Response(
-      JSON.stringify({ success: true, report_id: report.id }),
+      JSON.stringify({ success: true, report_id: report.id, post_id: post?.id }),
       { headers: { 'Content-Type': 'application/json' } }
     )
 

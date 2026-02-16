@@ -16,13 +16,14 @@ function Onboarding() {
 
   // 表单数据
   const [formData, setFormData] = useState({
+    username: '',
+    bio: '',
     gender: '',
     playingYears: '',
     selfRatedNtrp: 3.0,
     idol: '',
     tennisStyle: '',
     customStyle: '',
-    // 新增选填字段
     age: '',
     location: '',
     equipment: '',
@@ -72,6 +73,8 @@ const checkUserAndProfile = async (editMode = false) => {
       if (error) throw error
       
       setFormData({
+        username: data.username || '',
+        bio: data.bio || '',
         gender: data.gender || '',
         playingYears: data.playing_years || '',
         selfRatedNtrp: data.self_rated_ntrp || 3.0,
@@ -118,6 +121,7 @@ const checkUserAndProfile = async (editMode = false) => {
 
   // 验证表单（仅必填项）
   const validateForm = () => {
+    if (!(formData.username || '').trim()) return '请填写昵称/用户名'
     if (!formData.gender) return '请选择性别'
     if (!formData.playingYears) return '请输入球龄'
     if (formData.playingYears < 0 || formData.playingYears > 70) return '球龄必须在0-70年之间'
@@ -149,6 +153,8 @@ const checkUserAndProfile = async (editMode = false) => {
 
     const { error } = await updateProfile(user.id, {
       ...formData,
+      username: (formData.username || '').trim() || undefined,
+      bio: (formData.bio || '').trim() || undefined,
       tennisStyle: finalStyle,
       age: formData.age ? parseInt(formData.age) : null,
       playingYears: parseInt(formData.playingYears)
@@ -204,6 +210,38 @@ const checkUserAndProfile = async (editMode = false) => {
             {/* ===== 必填区域 ===== */}
             <div className="border-b border-gray-100 pb-6">
               <h2 className="text-lg font-semibold text-gray-800 mb-4">基本信息（必填）</h2>
+              
+              {/* 昵称/用户名 */}
+              <div className="mb-4">
+                <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
+                  昵称/用户名 <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="username"
+                  name="username"
+                  value={formData.username}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-wimbledon-grass focus:border-transparent"
+                  placeholder="例如：网球小王"
+                />
+              </div>
+
+              {/* 个人签名 */}
+              <div className="mb-4">
+                <label htmlFor="bio" className="block text-sm font-medium text-gray-700 mb-1">
+                  个人签名（选填）
+                </label>
+                <input
+                  type="text"
+                  id="bio"
+                  name="bio"
+                  value={formData.bio}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-wimbledon-grass focus:border-transparent"
+                  placeholder="例如：热爱网球，享受每一次击球的快乐！"
+                />
+              </div>
               
               {/* 性别选择 */}
               <div className="mb-4">

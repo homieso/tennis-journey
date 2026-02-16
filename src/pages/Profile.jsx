@@ -1,21 +1,44 @@
 // src/pages/Profile.jsx
-// 个人主页 - 显示档案、报告和会员状态
+// 个人主页 - 显示档案、报告和会员状态，增加社交统计
 
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { getCurrentUser, signOut } from '../lib/auth'
 import { redirectToCustomerPortal } from '../lib/stripe'
+import { useTranslation } from '../lib/i18n'
+import PostCard from '../components/PostCard'
 
 function Profile() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const [profile, setProfile] = useState(null)
   const [reports, setReports] = useState([])
   const [loading, setLoading] = useState(true)
+  
+  // 新增社交相关状态
+  const [profileTab, setProfileTab] = useState('profile') // 'profile'（资料）, 'activity'（动态）
+  const [socialTab, setSocialTab] = useState('posts') // 'posts', 'reposts', 'interactions'（仅在动态标签内）
+  const [userPosts, setUserPosts] = useState([])
+  const [userReposts, setUserReposts] = useState([])
+  const [userLikes, setUserLikes] = useState([])
+  const [socialStats, setSocialStats] = useState({
+    totalLikesReceived: 0,
+    totalPosts: 0,
+    totalReposts: 0,
+    totalLikesGiven: 0,
+    totalCommentsGiven: 0
+  })
 
   useEffect(() => {
     fetchProfileData()
   }, [])
+
+  useEffect(() => {
+    if (profile) {
+      fetchSocialData()
+    }
+  }, [profile])
 
   const fetchProfileData = async () => {
     try {
@@ -51,148 +74,481 @@ function Profile() {
     }
   }
 
+  const fetchSocialData = async () => {
+    try {
+      const { user } = await getCurrentUser()
+      if (!user) return
+
+      // 获取用户发布的帖子（原创）
+      const { data: postsData, error: postsError } = await supabase
+        .from('posts')
+        .select(`
+          *,
+          profiles:user_id (
+            id,
+            username,
+            avatar_url
+          ),
+          scout_reports!posts_report_id_fkey (
+            id,
+            generated_at
+          )
+        `)
+        .eq('user_id', user.id)
+        .is('original_post_id', null) // 原创帖子（不是转发）
+        .order('created_at', { ascending: false })
+
+      if (postsError) throw postsError
+      setUserPosts(postsData || [])
+
+      // 获取用户转发的帖子
+      const { data: repostsData, error: repostsError } = await supabase
+        .from('posts')
+        .select(`
+          *,
+          profiles:user_id (
+            id,
+            username,
+            avatar_url
+          ),
+          original_post:original_post_id (
+            id,
+            content,
+            user_id,
+            profiles!inner (
+              username,
+              avatar_url
+            )
+          )
+        `)
+        .eq('user_id', user.id)
+        .not('original_post_id', 'is', null) // 转发帖子
+        .order('created_at', { ascending: false })
+
+      if (repostsError) throw repostsError
+      setUserReposts(repostsData || [])
+
+      // 获取用户点赞过的帖子
+      const { data: likesData, error: likesError } = await supabase
+        .from('likes')
+        .select(`
+          post_id,
+          posts!inner (
+            id,
+            content,
+            created_at,
+            profiles!inner (
+              username,
+              avatar_url
+            )
+          )
+        `)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(20)
+
+      if (likesError) throw likesError
+      setUserLikes(likesData?.map(like => like.posts) || [])
+
+      // 计算社交统计
+      const totalLikesReceived = (postsData || []).reduce((sum, post) => sum + (post.like_count || 0), 0)
+      const totalPosts = (postsData || []).length
+      const totalReposts = (repostsData || []).length
+      const totalLikesGiven = likesData?.length || 0
+      
+      // 获取用户评论数量
+      const { count: commentCount, error: commentError } = await supabase
+        .from('comments')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+      
+      const totalCommentsGiven = commentError ? 0 : (commentCount || 0)
+
+      setSocialStats({
+        totalLikesReceived,
+        totalPosts,
+        totalReposts,
+        totalLikesGiven,
+        totalCommentsGiven
+      })
+
+    } catch (error) {
+      console.error('获取社交数据失败:', error)
+    }
+  }
+
   const handleLogout = async () => {
     await signOut()
     navigate('/login')
   }
 
+  const formatTime = (timestamp) => {
+    const date = new Date(timestamp)
+    const now = new Date()
+    const diff = now - date
+    
+    if (diff < 60 * 60 * 1000) {
+      const minutes = Math.floor(diff / (60 * 1000))
+      return `${minutes}分钟前`
+    }
+    if (diff < 24 * 60 * 60 * 1000) {
+      const hours = Math.floor(diff / (60 * 60 * 1000))
+      return `${hours}小时前`
+    }
+    if (diff < 7 * 24 * 60 * 60 * 1000) {
+      const days = Math.floor(diff / (24 * 60 * 60 * 1000))
+      return `${days}天前`
+    }
+    return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`
+  }
+
+  const handleLikeUpdate = (postId, operation) => {
+    // 更新本地状态
+    if (socialTab === 'posts') {
+      setUserPosts(prev => prev.map(post => {
+        if (post.id === postId) {
+          return {
+            ...post,
+            like_count: operation === 'increment'
+              ? (post.like_count || 0) + 1
+              : Math.max(0, (post.like_count || 0) - 1)
+          }
+        }
+        return post
+      }))
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-wimbledon-white flex items-center justify-center">
-        <div className="text-wimbledon-green">加载中...</div>
+        <div className="text-wimbledon-green">{t('loading')}</div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-wimbledon-white py-8 px-4 pb-24 pb-24">
+    <div className="min-h-screen bg-wimbledon-white py-8 px-4 pb-24">
       <div className="max-w-4xl mx-auto">
         {/* 头部导航 */}
         <div className="flex items-center justify-between mb-6">
           <div className="w-16"></div>
           <h1 className="font-wimbledon text-2xl font-bold text-wimbledon-green">
-            个人主页
+            {t('profile.title')}
           </h1>
           <button
             onClick={handleLogout}
             className="text-gray-600 hover:text-red-500 text-sm"
           >
-            退出登录
+            {t('profile.logout')}
           </button>
         </div>
 
-       {/* 会员状态卡片 */}
-<div className="bg-white rounded-2xl shadow-md p-6 mb-6">
-  <div className="flex items-center justify-between">
-    <div>
-      <h2 className="text-lg font-semibold text-gray-800 mb-1">
-        会员状态
-      </h2>
-      {profile?.membership_valid_until ? (
-        <div>
-          <p className="text-sm text-gray-600">
-            🎾 会员有效期至：{new Date(profile.membership_valid_until).toLocaleDateString('zh-CN')}
-          </p>
-          <p className="text-xs text-gray-500 mt-1">
-            到期后可续费，继续享受AI球探报告服务
-          </p>
+        {/* 社交统计卡片 */}
+        <div className="bg-gradient-to-r from-wimbledon-green/10 to-wimbledon-grass/10 rounded-2xl shadow-md p-6 mb-6">
+          <h2 className="text-lg font-semibold text-gray-800 mb-4">社交统计</h2>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-wimbledon-green">{socialStats.totalLikesReceived}</div>
+              <div className="text-xs text-gray-600">获赞总数</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-wimbledon-green">{socialStats.totalPosts}</div>
+              <div className="text-xs text-gray-600">发布帖子</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-wimbledon-green">{socialStats.totalReposts}</div>
+              <div className="text-xs text-gray-600">转发帖子</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-wimbledon-green">{socialStats.totalLikesGiven}</div>
+              <div className="text-xs text-gray-600">点赞过的</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-wimbledon-green">{socialStats.totalCommentsGiven}</div>
+              <div className="text-xs text-gray-600">评论过的</div>
+            </div>
+          </div>
         </div>
-      ) : (
-        <p className="text-sm text-gray-600">
-          {profile?.challenge_status === 'success' 
-            ? '恭喜完成挑战！报告生成后可获得30天免费会员'
-            : '暂无会员资格，完成7天挑战即可获得30天免费会员'}
-        </p>
-      )}
-    </div>
-    
-    {/* 会员操作按钮组 */}
-    <div className="flex space-x-2">
-      {profile?.membership_valid_until ? (
-        <>
-          <button
-            onClick={() => navigate('/pricing')}
-            className="bg-wimbledon-grass hover:bg-wimbledon-green text-white px-4 py-2 rounded-lg text-sm transition-colors"
-          >
-            续费会员
-          </button>
-          <button
-            onClick={redirectToCustomerPortal}
-            className="bg-white border border-wimbledon-grass text-wimbledon-grass hover:bg-wimbledon-grass/5 px-4 py-2 rounded-lg text-sm transition-colors"
-          >
-            管理订阅
-          </button>
-          <button
-            onClick={() => navigate('/redeem')}
-            className="bg-white border border-gray-300 text-gray-600 hover:bg-gray-50 px-4 py-2 rounded-lg text-sm transition-colors"
-          >
-            兑换激活码
-          </button>
-        </>
-      ) : (
-        <button
-          onClick={() => navigate('/challenge')}
-          className="bg-wimbledon-grass hover:bg-wimbledon-green text-white px-4 py-2 rounded-lg text-sm transition-colors"
-        >
-          {profile?.challenge_status === 'in_progress' ? '查看挑战' : '开始挑战'}
-        </button>
-      )}
-    </div>
-  </div>
-</div>
+
+        {/* 社交内容选项卡 */}
+        <div className="bg-white rounded-2xl shadow-md p-6 mb-6">
+          <div className="flex space-x-4 border-b border-gray-100 mb-6">
+            <button
+              onClick={() => setSocialTab('posts')}
+              className={`pb-3 px-1 font-medium ${socialTab === 'posts' ? 'text-wimbledon-green border-b-2 border-wimbledon-green' : 'text-gray-500'}`}
+            >
+              我的帖子 ({socialStats.totalPosts})
+            </button>
+            <button
+              onClick={() => setSocialTab('reposts')}
+              className={`pb-3 px-1 font-medium ${socialTab === 'reposts' ? 'text-wimbledon-green border-b-2 border-wimbledon-green' : 'text-gray-500'}`}
+            >
+              转发的 ({socialStats.totalReposts})
+            </button>
+            <button
+              onClick={() => setSocialTab('interactions')}
+              className={`pb-3 px-1 font-medium ${socialTab === 'interactions' ? 'text-wimbledon-green border-b-2 border-wimbledon-green' : 'text-gray-500'}`}
+            >
+              互动记录
+            </button>
+          </div>
+
+          {/* 我的帖子 */}
+          {socialTab === 'posts' && (
+            <div>
+              {userPosts.length > 0 ? (
+                <div className="space-y-4">
+                  {userPosts.map((post) => (
+                    <PostCard
+                      key={post.id}
+                      post={post}
+                      onLikeUpdate={handleLikeUpdate}
+                      onCommentUpdate={() => {}}
+                      onRepostUpdate={() => {}}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <span className="text-4xl mb-4 block">📝</span>
+                  <p className="text-gray-500 mb-2">还没有发布过帖子</p>
+                  <p className="text-sm text-gray-400">去社区广场分享你的网球故事吧</p>
+                  <button
+                    onClick={() => navigate('/community')}
+                    className="mt-4 bg-wimbledon-grass hover:bg-wimbledon-green text-white px-4 py-2 rounded-lg text-sm"
+                  >
+                    去社区逛逛 →
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* 转发的帖子 */}
+          {socialTab === 'reposts' && (
+            <div>
+              {userReposts.length > 0 ? (
+                <div className="space-y-4">
+                  {userReposts.map((post) => (
+                    <div key={post.id} className="bg-gray-50 rounded-xl p-4">
+                      {/* 转发标识 */}
+                      <div className="flex items-center text-sm text-gray-500 mb-2">
+                        <span className="mr-1">🔄</span>
+                        <span>你转发了</span>
+                      </div>
+                      
+                      {/* 原帖信息 */}
+                      {post.original_post && (
+                        <div className="bg-white rounded-lg p-3 border border-gray-200 mb-3">
+                          <div className="flex items-center mb-2">
+                            <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-xs mr-2">
+                              {post.original_post.profiles?.username?.charAt(0) || 'U'}
+                            </div>
+                            <span className="text-sm font-medium">
+                              @{post.original_post.profiles?.username || '用户'}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-700 line-clamp-2">{post.original_post.content}</p>
+                        </div>
+                      )}
+                      
+                      {/* 转发时的评论 */}
+                      {post.content && (
+                        <p className="text-gray-800 text-sm mb-3">{post.content}</p>
+                      )}
+                      
+                      {/* 统计信息 */}
+                      <div className="flex items-center text-xs text-gray-500">
+                        <span className="mr-4">❤️ {post.like_count || 0} 赞</span>
+                        <span className="mr-4">💬 {post.comment_count || 0} 评论</span>
+                        <span>📅 {formatTime(post.created_at)}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <span className="text-4xl mb-4 block">🔄</span>
+                  <p className="text-gray-500 mb-2">还没有转发过帖子</p>
+                  <p className="text-sm text-gray-400">在社区广场发现有趣的内容可以转发分享</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* 互动记录 */}
+          {socialTab === 'interactions' && (
+            <div>
+              {/* 点赞过的帖子 */}
+              <div className="mb-8">
+                <h3 className="font-medium text-gray-800 mb-4">点赞过的帖子 ({userLikes.length})</h3>
+                {userLikes.length > 0 ? (
+                  <div className="space-y-3">
+                    {userLikes.map((post) => (
+                      <div key={post.id} className="flex items-start p-3 bg-gray-50 rounded-lg hover:bg-gray-100">
+                        <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-sm mr-3">
+                          {post.profiles?.username?.charAt(0) || 'U'}
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-sm font-medium">@{post.profiles?.username || '用户'}</span>
+                            <span className="text-xs text-gray-500">{formatTime(post.created_at)}</span>
+                          </div>
+                          <p className="text-sm text-gray-700 line-clamp-2">{post.content}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-500 text-sm text-center py-4">还没有点赞过任何帖子</p>
+                )}
+              </div>
+
+              {/* 评论过的帖子（暂未实现） */}
+              <div>
+                <h3 className="font-medium text-gray-800 mb-4">评论过的帖子</h3>
+                <p className="text-gray-500 text-sm text-center py-4">评论功能即将上线</p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* 会员状态卡片 */}
+        <div className="bg-white rounded-2xl shadow-md p-6 mb-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-800 mb-1">
+                {t('profile.membership.title')}
+              </h2>
+              {profile?.membership_valid_until ? (
+                <div>
+                  <p className="text-sm text-gray-600">
+                    {t('profile.membership.valid_until', { date: new Date(profile.membership_valid_until).toLocaleDateString() })}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {t('profile.membership.renew_note')}
+                  </p>
+                </div>
+              ) : (
+                <p className="text-sm text-gray-600">
+                  {profile?.challenge_status === 'success' 
+                    ? t('profile.membership.challenge_success')
+                    : t('profile.membership.no_membership')}
+                </p>
+              )}
+            </div>
+            
+            {/* 会员操作按钮组 */}
+            <div className="flex space-x-2">
+              {profile?.membership_valid_until ? (
+                <>
+                  <button
+                    onClick={() => navigate('/pricing')}
+                    className="bg-wimbledon-grass hover:bg-wimbledon-green text-white px-4 py-2 rounded-lg text-sm transition-colors"
+                  >
+                    {t('profile.membership.renew')}
+                  </button>
+                  <button
+                    onClick={redirectToCustomerPortal}
+                    className="bg-white border border-wimbledon-grass text-wimbledon-grass hover:bg-wimbledon-grass/5 px-4 py-2 rounded-lg text-sm transition-colors"
+                  >
+                    {t('profile.membership.manage')}
+                  </button>
+                  <button
+                    onClick={() => navigate('/redeem')}
+                    className="bg-white border border-gray-300 text-gray-600 hover:bg-gray-50 px-4 py-2 rounded-lg text-sm transition-colors"
+                  >
+                    {t('profile.membership.redeem')}
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => navigate('/challenge')}
+                  className="bg-wimbledon-grass hover:bg-wimbledon-green text-white px-4 py-2 rounded-lg text-sm transition-colors"
+                >
+                  {profile?.challenge_status === 'in_progress' ? t('profile.membership.view_challenge') : t('profile.membership.start_challenge')}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
         {/* 网球档案卡片 */}
         <div className="bg-white rounded-2xl shadow-md p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-gray-800">
-              我的网球档案
+              {t('profile.tennis_profile.title')}
             </h2>
-            <button
-              onClick={() => navigate('/onboarding?edit=true')}
-              className="text-wimbledon-green hover:text-wimbledon-grass text-sm"
-            >
-              编辑档案
-            </button>
+            <div className="flex space-x-2">
+              <button
+                onClick={() => navigate('/onboarding?edit=true')}
+                className="text-wimbledon-green hover:text-wimbledon-grass text-sm"
+              >
+                {t('profile.tennis_profile.edit')}
+              </button>
+              <button
+                onClick={() => navigate('/feedback')}
+                className="text-blue-600 hover:text-blue-800 text-sm"
+              >
+                📢 意见反馈
+              </button>
+            </div>
           </div>
+          
+          {/* 核心信息区域 - 用户名和个人签名（仅展示，编辑统一在「编辑档案」） */}
+          <div className="mb-6 pb-6 border-b border-gray-100">
+            <div className="mb-4">
+              <p className="text-xs text-gray-500">{t('profile.nickname_label')}</p>
+              <p className="text-lg font-bold text-gray-900">{profile?.username || profile?.email?.split('@')[0] || t('profile.fields.not_set')}</p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-500">{t('profile.fields.bio')}</p>
+              <p className="text-sm text-gray-700 italic">{profile?.bio || t('profile.fields.bio_default')}</p>
+            </div>
+          </div>
+          
+          {/* 补充信息区域 */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <p className="text-xs text-gray-500">性别</p>
-              <p className="text-sm font-medium">{profile?.gender || '未设置'}</p>
+              <p className="text-xs text-gray-500">{t('profile.fields.gender')}</p>
+              <p className="text-sm font-medium">{profile?.gender || t('profile.fields.not_set')}</p>
             </div>
             <div>
-              <p className="text-xs text-gray-500">年龄</p>
-              <p className="text-sm font-medium">{profile?.age ? `${profile.age}岁` : '未设置'}</p>
+              <p className="text-xs text-gray-500">{t('profile.fields.age')}</p>
+              <p className="text-sm font-medium">{profile?.age ? `${profile.age}` : t('profile.fields.not_set')}</p>
             </div>
             <div>
-              <p className="text-xs text-gray-500">球龄</p>
-              <p className="text-sm font-medium">{profile?.playing_years || 0}年</p>
+              <p className="text-xs text-gray-500">{t('profile.fields.playing_years')}</p>
+              <p className="text-sm font-medium">{profile?.playing_years ?? 0}</p>
             </div>
             <div>
-              <p className="text-xs text-gray-500">NTRP自评</p>
-              <p className="text-sm font-medium">{profile?.self_rated_ntrp || '未设置'}</p>
+              <p className="text-xs text-gray-500">{t('profile.fields.ntrp')}</p>
+              <p className="text-sm font-medium">{profile?.self_rated_ntrp ?? t('profile.fields.not_set')}</p>
             </div>
             <div>
-              <p className="text-xs text-gray-500">地区</p>
-              <p className="text-sm font-medium">{profile?.location || '未设置'}</p>
+              <p className="text-xs text-gray-500">{t('profile.fields.location')}</p>
+              <p className="text-sm font-medium">{profile?.location || t('profile.fields.not_set')}</p>
             </div>
             <div>
-              <p className="text-xs text-gray-500">偶像</p>
-              <p className="text-sm font-medium">{profile?.idol || '未设置'}</p>
+              <p className="text-xs text-gray-500">{t('profile.fields.idol')}</p>
+              <p className="text-sm font-medium">{profile?.idol || t('profile.fields.not_set')}</p>
             </div>
             <div className="col-span-2">
-              <p className="text-xs text-gray-500">网球风格</p>
-              <p className="text-sm font-medium">{profile?.tennis_style || '未设置'}</p>
+              <p className="text-xs text-gray-500">{t('profile.fields.tennis_style')}</p>
+              <p className="text-sm font-medium">{profile?.tennis_style || t('profile.fields.not_set')}</p>
             </div>
             <div className="col-span-2">
-              <p className="text-xs text-gray-500">装备</p>
-              <p className="text-sm font-medium">{profile?.equipment || '未设置'}</p>
+              <p className="text-xs text-gray-500">{t('profile.fields.equipment')}</p>
+              <p className="text-sm font-medium">{profile?.equipment || t('profile.fields.not_set')}</p>
             </div>
             <div className="col-span-2">
-              <p className="text-xs text-gray-500">伤病历史</p>
-              <p className="text-sm font-medium">{profile?.injury_history || '无'}</p>
+              <p className="text-xs text-gray-500">{t('profile.fields.injury_history')}</p>
+              <p className="text-sm font-medium">{profile?.injury_history || t('profile.fields.none')}</p>
             </div>
             <div className="col-span-2">
-              <p className="text-xs text-gray-500">短期目标</p>
-              <p className="text-sm font-medium">{profile?.short_term_goal || '未设置'}</p>
+              <p className="text-xs text-gray-500">{t('profile.fields.short_term_goal')}</p>
+              <p className="text-sm font-medium">{profile?.short_term_goal || t('profile.fields.not_set')}</p>
             </div>
           </div>
         </div>
@@ -200,7 +556,7 @@ function Profile() {
         {/* 球探报告列表 */}
         <div className="bg-white rounded-2xl shadow-md p-6">
           <h2 className="text-lg font-semibold text-gray-800 mb-4">
-            我的球探报告
+            {t('profile.reports.title')}
           </h2>
           {reports.length > 0 ? (
             <div className="space-y-3">
@@ -215,21 +571,21 @@ function Profile() {
                       {new Date(report.generated_at).toLocaleDateString('zh-CN')}
                     </p>
                     <p className="text-xs text-gray-500 mt-1">
-                      {report.is_published ? '已发布' : '待发布'}
+                      {report.is_published ? t('profile.reports.published') : t('profile.reports.pending')}
                     </p>
                   </div>
-                  <span className="text-wimbledon-green text-sm">查看 →</span>
+                  <span className="text-wimbledon-green text-sm">{t('profile.reports.view')}</span>
                 </div>
               ))}
             </div>
           ) : (
             <div className="text-center py-8">
-              <p className="text-gray-500 mb-4">暂无球探报告</p>
+              <p className="text-gray-500 mb-4">{t('profile.reports.no_reports')}</p>
               <button
                 onClick={() => navigate('/challenge')}
                 className="bg-wimbledon-grass hover:bg-wimbledon-green text-white px-6 py-2 rounded-lg text-sm transition-colors"
               >
-                开始7天挑战
+                {t('profile.reports.start_challenge')}
               </button>
             </div>
           )}

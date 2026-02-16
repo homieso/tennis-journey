@@ -136,21 +136,24 @@ export const updateProfile = async (userId, profileData) => {
     let result
     if (existingProfile) {
       // 更新现有档案
+      const updatePayload = {
+        gender: profileData.gender,
+        playing_years: parseInt(profileData.playingYears) || 0,
+        self_rated_ntrp: parseFloat(profileData.selfRatedNtrp) || 3.0,
+        idol: profileData.idol || '',
+        tennis_style: profileData.tennisStyle || '',
+        age: profileData.age ? parseInt(profileData.age) : null,
+        location: profileData.location || '',
+        equipment: profileData.equipment || '',
+        injury_history: profileData.injuryHistory || '',
+        short_term_goal: profileData.shortTermGoal || '',
+        updated_at: new Date(),
+      }
+      if (profileData.username !== undefined) updatePayload.username = profileData.username
+      if (profileData.bio !== undefined) updatePayload.bio = profileData.bio
       result = await supabase
         .from('profiles')
-        .update({
-          gender: profileData.gender,
-          playing_years: parseInt(profileData.playingYears) || 0,
-          self_rated_ntrp: parseFloat(profileData.selfRatedNtrp) || 3.0,
-          idol: profileData.idol || '',
-          tennis_style: profileData.tennisStyle || '',
-          age: profileData.age ? parseInt(profileData.age) : null,
-          location: profileData.location || '',
-          equipment: profileData.equipment || '',
-          injury_history: profileData.injuryHistory || '',
-          short_term_goal: profileData.shortTermGoal || '',
-          updated_at: new Date(),
-        })
+        .update(updatePayload)
         .eq('id', userId)
         .select()
         .single()
@@ -162,6 +165,8 @@ export const updateProfile = async (userId, profileData) => {
           {
             id: userId,
             email: user?.email || '',  // 从当前用户获取 email
+            username: profileData.username !== undefined ? profileData.username : (user?.email ? user.email.split('@')[0] : ''),
+            bio: profileData.bio !== undefined ? profileData.bio : null,
             gender: profileData.gender,
             playing_years: parseInt(profileData.playingYears) || 0,
             self_rated_ntrp: parseFloat(profileData.selfRatedNtrp) || 3.0,
@@ -185,6 +190,25 @@ export const updateProfile = async (userId, profileData) => {
     return { data: result.data, error: null }
   } catch (error) {
     console.error('更新档案错误:', error.message)
+    return { data: null, error }
+  }
+}
+
+/**
+ * 仅更新用户昵称/用户名（个人主页内联编辑用）
+ */
+export const updateProfileUsername = async (userId, username) => {
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .update({ username: (username || '').trim() || null, updated_at: new Date() })
+      .eq('id', userId)
+      .select()
+      .single()
+    if (error) throw error
+    return { data, error: null }
+  } catch (error) {
+    console.error('更新昵称错误:', error.message)
     return { data: null, error }
   }
 }
