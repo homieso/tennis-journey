@@ -412,6 +412,17 @@ export function getCurrentLanguage() {
     return savedLang
   }
   
+  // 检测域名，自动设置默认语言
+  // 注意：域名检测的优先级低于用户手动保存的语言，但高于浏览器语言
+  const hostname = window.location.hostname
+  if (hostname.includes('tennisjourney.top')) {
+    // 国内域名默认简体中文
+    return 'zh'
+  } else if (hostname.includes('tj-7.vercel.app')) {
+    // 国际域名默认英语
+    return 'en'
+  }
+  
   // 检测浏览器语言
   const browserLang = navigator.language.toLowerCase()
   if (browserLang.startsWith('zh')) {
