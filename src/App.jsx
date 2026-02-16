@@ -40,12 +40,12 @@ function Home() {
   // 导入国际化
   const { t, currentLanguage, setLanguage } = useTranslation()
 
-  // 推荐卡片图片URL
+  // 推荐卡片图片URL - 替换为网球相关图标/图片
   const recommendationImages = {
-    video: 'https://finjgjjqcyjdaucyxchp.supabase.co/storage/v1/object/public/tennis-journey/examples/forehand_1.jpg',
-    brand: 'https://finjgjjqcyjdaucyxchp.supabase.co/storage/v1/object/public/tennis-journey/examples/serve_3.jpg',
-    event: 'https://finjgjjqcyjdaucyxchp.supabase.co/storage/v1/object/public/tennis-journey/examples/split_step_2.jpg',
-    plan: 'https://finjgjjqcyjdaucyxchp.supabase.co/storage/v1/object/public/tennis-journey/examples/forehand_1.jpg'
+    video: 'https://images.unsplash.com/photo-1595435934247-5d33b7f92c5c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80', // 网球拍
+    brand: 'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80', // 网球
+    event: 'https://images.unsplash.com/photo-1622279457486-62dcc4a431b6?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80', // 网球比赛
+    plan: 'https://images.unsplash.com/photo-1622279457551-2c8e23d6bca7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'  // 网球训练
   }
 
   useEffect(() => {
@@ -184,7 +184,7 @@ function Home() {
         console.log('✅ 已创建3条站点公告')
       }
 
-      // 2. 获取真实的社区帖子（按点赞数排序，如果没有点赞则按创建时间）
+      // 2. 获取真实的社区帖子（只选取原创帖子，按综合热度排序）
       const { data, error } = await supabase
         .from('posts')
         .select(`
@@ -195,12 +195,15 @@ function Home() {
           comment_count,
           repost_count,
           media_urls,
+          original_post_id,
           profiles:user_id (
             username,
             avatar_url
           )
         `)
+        .is('original_post_id', null) // 只选取原创帖子，排除转发
         .order('like_count', { ascending: false })
+        .order('comment_count', { ascending: false })
         .order('created_at', { ascending: false })
         .limit(3) // 首页只显示3条
       

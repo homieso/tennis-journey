@@ -34,6 +34,12 @@ function Profile() {
   const [uploading, setUploading] = useState(false)
   const [avatarPreview, setAvatarPreview] = useState(null)
 
+  // 折叠/展开状态
+  const [postsExpanded, setPostsExpanded] = useState(false)
+  const [profileExpanded, setProfileExpanded] = useState(false)
+  const POSTS_VISIBLE_LIMIT = 2 // 默认显示2条帖子
+  const PROFILE_BASIC_FIELDS = ['gender', 'playing_years', 'self_rated_ntrp', 'location'] // 核心信息
+
   useEffect(() => {
     fetchProfileData()
   }, [])
@@ -396,17 +402,41 @@ function Profile() {
           {socialTab === 'posts' && (
             <div>
               {userPosts.length > 0 ? (
-                <div className="space-y-4">
-                  {userPosts.map((post) => (
-                    <PostCard
-                      key={post.id}
-                      post={post}
-                      onLikeUpdate={handleLikeUpdate}
-                      onCommentUpdate={() => {}}
-                      onRepostUpdate={() => {}}
-                    />
-                  ))}
-                </div>
+                <>
+                  <div className="space-y-4">
+                    {userPosts
+                      .slice(0, postsExpanded ? userPosts.length : POSTS_VISIBLE_LIMIT)
+                      .map((post) => (
+                        <PostCard
+                          key={post.id}
+                          post={post}
+                          onLikeUpdate={handleLikeUpdate}
+                          onCommentUpdate={() => {}}
+                          onRepostUpdate={() => {}}
+                        />
+                      ))}
+                  </div>
+                  {userPosts.length > POSTS_VISIBLE_LIMIT && (
+                    <div className="mt-4 pt-4 border-t border-gray-100 flex justify-center">
+                      <button
+                        onClick={() => setPostsExpanded(!postsExpanded)}
+                        className="text-wimbledon-green hover:text-wimbledon-grass text-sm font-medium flex items-center gap-1 transition-colors"
+                      >
+                        {postsExpanded ? (
+                          <>
+                            <span>收起</span>
+                            <span className="transform rotate-180">▼</span>
+                          </>
+                        ) : (
+                          <>
+                            <span>展开全部 ({userPosts.length - POSTS_VISIBLE_LIMIT} 条)</span>
+                            <span>▼</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  )}
+                </>
               ) : (
                 <div className="text-center py-8">
                   <span className="text-4xl mb-4 block">📝</span>
@@ -606,15 +636,11 @@ function Profile() {
             </div>
           </div>
           
-          {/* 补充信息区域 */}
-          <div className="grid grid-cols-2 gap-4">
+          {/* 核心档案信息（始终显示） */}
+          <div className="grid grid-cols-2 gap-4 mb-4">
             <div>
               <p className="text-xs text-gray-500">{t('profile.fields.gender')}</p>
               <p className="text-sm font-medium">{profile?.gender || t('profile.fields.not_set')}</p>
-            </div>
-            <div>
-              <p className="text-xs text-gray-500">{t('profile.fields.age')}</p>
-              <p className="text-sm font-medium">{profile?.age ? `${profile.age}` : t('profile.fields.not_set')}</p>
             </div>
             <div>
               <p className="text-xs text-gray-500">{t('profile.fields.playing_years')}</p>
@@ -628,26 +654,56 @@ function Profile() {
               <p className="text-xs text-gray-500">{t('profile.fields.location')}</p>
               <p className="text-sm font-medium">{profile?.location || t('profile.fields.not_set')}</p>
             </div>
-            <div>
-              <p className="text-xs text-gray-500">{t('profile.fields.idol')}</p>
-              <p className="text-sm font-medium">{profile?.idol || t('profile.fields.not_set')}</p>
+          </div>
+          
+          {/* 展开的补充信息 */}
+          {profileExpanded && (
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div>
+                <p className="text-xs text-gray-500">{t('profile.fields.age')}</p>
+                <p className="text-sm font-medium">{profile?.age ? `${profile.age}` : t('profile.fields.not_set')}</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500">{t('profile.fields.idol')}</p>
+                <p className="text-sm font-medium">{profile?.idol || t('profile.fields.not_set')}</p>
+              </div>
+              <div className="col-span-2">
+                <p className="text-xs text-gray-500">{t('profile.fields.tennis_style')}</p>
+                <p className="text-sm font-medium">{profile?.tennis_style || t('profile.fields.not_set')}</p>
+              </div>
+              <div className="col-span-2">
+                <p className="text-xs text-gray-500">{t('profile.fields.equipment')}</p>
+                <p className="text-sm font-medium">{profile?.equipment || t('profile.fields.not_set')}</p>
+              </div>
+              <div className="col-span-2">
+                <p className="text-xs text-gray-500">{t('profile.fields.injury_history')}</p>
+                <p className="text-sm font-medium">{profile?.injury_history || t('profile.fields.none')}</p>
+              </div>
+              <div className="col-span-2">
+                <p className="text-xs text-gray-500">{t('profile.fields.short_term_goal')}</p>
+                <p className="text-sm font-medium">{profile?.short_term_goal || t('profile.fields.not_set')}</p>
+              </div>
             </div>
-            <div className="col-span-2">
-              <p className="text-xs text-gray-500">{t('profile.fields.tennis_style')}</p>
-              <p className="text-sm font-medium">{profile?.tennis_style || t('profile.fields.not_set')}</p>
-            </div>
-            <div className="col-span-2">
-              <p className="text-xs text-gray-500">{t('profile.fields.equipment')}</p>
-              <p className="text-sm font-medium">{profile?.equipment || t('profile.fields.not_set')}</p>
-            </div>
-            <div className="col-span-2">
-              <p className="text-xs text-gray-500">{t('profile.fields.injury_history')}</p>
-              <p className="text-sm font-medium">{profile?.injury_history || t('profile.fields.none')}</p>
-            </div>
-            <div className="col-span-2">
-              <p className="text-xs text-gray-500">{t('profile.fields.short_term_goal')}</p>
-              <p className="text-sm font-medium">{profile?.short_term_goal || t('profile.fields.not_set')}</p>
-            </div>
+          )}
+          
+          {/* 展开/收起按钮 */}
+          <div className="pt-4 border-t border-gray-100 flex justify-center">
+            <button
+              onClick={() => setProfileExpanded(!profileExpanded)}
+              className="text-wimbledon-green hover:text-wimbledon-grass text-sm font-medium flex items-center gap-1 transition-colors"
+            >
+              {profileExpanded ? (
+                <>
+                  <span>收起档案</span>
+                  <span className="transform rotate-180">▼</span>
+                </>
+              ) : (
+                <>
+                  <span>展开完整档案</span>
+                  <span>▼</span>
+                </>
+              )}
+            </button>
           </div>
         </div>
 

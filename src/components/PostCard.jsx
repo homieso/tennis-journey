@@ -484,22 +484,13 @@ function PostCard({ post, onLikeUpdate, onCommentUpdate, onRepostUpdate, onDelet
             </button>
           </div>
           
-          {/* 分享按钮 */}
-          <button
-            type="button"
-            onClick={handleShare}
-            className="text-gray-400 hover:text-gray-600 text-sm"
-          >
-            ↗️ {t('community.share')}
-          </button>
-
           {/* 删除按钮（仅管理员可见） */}
           {isAdmin && (
             <button
               type="button"
               onClick={handleDelete}
               disabled={deleting}
-              className="text-red-400 hover:text-red-600 text-sm ml-2"
+              className="text-red-400 hover:text-red-600 text-sm"
             >
               {deleting ? '删除中...' : '🗑️ 删除'}
             </button>
