@@ -7,7 +7,7 @@ import { supabase } from '../lib/supabase'
 import { getCurrentUser } from '../lib/auth'
 import { useTranslation } from '../lib/i18n'
 
-function PostCard({ post, onLikeUpdate, onCommentUpdate, onRepostUpdate }) {
+function PostCard({ post, onLikeUpdate, onCommentUpdate, onRepostUpdate, onDelete }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   
@@ -16,12 +16,17 @@ function PostCard({ post, onLikeUpdate, onCommentUpdate, onRepostUpdate }) {
   const [liked, setLiked] = useState(false)
   const [reposted, setReposted] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const [currentUser, setCurrentUser] = useState(null)
   
   // 图片相关状态
   const [imageUrls, setImageUrls] = useState([])
   const [showImageLightbox, setShowImageLightbox] = useState(false)
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
+
+  // 管理员ID
+  const adminUserId = 'dcee2e34-45f0-4506-9bac-4bdf0956273c'
+  const isAdmin = currentUser?.id === adminUserId
   
   // 帖子内容行数计算
   const MAX_LINES = 3
@@ -218,7 +223,45 @@ function PostCard({ post, onLikeUpdate, onCommentUpdate, onRepostUpdate }) {
       prompt('请复制以下链接分享给朋友:', fallbackText)
     }
   }
-  
+
+  // 处理删除（仅管理员）
+  const handleDelete = async () => {
+    if (!currentUser) {
+      navigate('/login')
+      return
+    }
+
+    const adminUserId = 'dcee2e34-45f0-4506-9bac-4bdf0956273c'
+    if (currentUser.id !== adminUserId) {
+      alert('只有管理员可以删除帖子')
+      return
+    }
+
+    const confirmed = window.confirm('确定要删除这个帖子吗？删除后无法恢复。')
+    if (!confirmed) return
+
+    setDeleting(true)
+    try {
+      const { error } = await supabase
+        .from('posts')
+        .delete()
+        .eq('id', post.id)
+
+      if (error) throw error
+
+      alert('帖子删除成功')
+      // 通知父组件更新
+      if (typeof onDelete === 'function') {
+        onDelete(post.id)
+      }
+    } catch (error) {
+      console.error('删除帖子失败:', error)
+      alert('删除失败: ' + error.message)
+    } finally {
+      setDeleting(false)
+    }
+  }
+
   // 处理评论点击
   const handleCommentClick = () => {
     navigate(`/post/${post.id}`)
@@ -449,6 +492,18 @@ function PostCard({ post, onLikeUpdate, onCommentUpdate, onRepostUpdate }) {
           >
             ↗️ {t('community.share')}
           </button>
+
+          {/* 删除按钮（仅管理员可见） */}
+          {isAdmin && (
+            <button
+              type="button"
+              onClick={handleDelete}
+              disabled={deleting}
+              className="text-red-400 hover:text-red-600 text-sm ml-2"
+            >
+              {deleting ? '删除中...' : '🗑️ 删除'}
+            </button>
+          )}
         </div>
         
         {/* 如果是转发，显示原帖信息 */}

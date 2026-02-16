@@ -30,6 +30,10 @@ function Profile() {
     totalCommentsGiven: 0
   })
 
+  // 头像上传状态
+  const [uploading, setUploading] = useState(false)
+  const [avatarPreview, setAvatarPreview] = useState(null)
+
   useEffect(() => {
     fetchProfileData()
   }, [])
@@ -219,6 +223,62 @@ function Profile() {
     }
   }
 
+  // 处理头像文件选择
+  const handleAvatarFileChange = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+
+    // 预览
+    const reader = new FileReader()
+    reader.onload = (e) => setAvatarPreview(e.target.result)
+    reader.readAsDataURL(file)
+
+    // 上传
+    await handleAvatarUpload(file)
+  }
+
+  // 上传头像到 Supabase Storage 并更新数据库
+  const handleAvatarUpload = async (file) => {
+    try {
+      setUploading(true)
+      const { user } = await getCurrentUser()
+      if (!user) return
+
+      const fileExt = file.name.split('.').pop()
+      const fileName = `${user.id}-${Date.now()}.${fileExt}`
+      const filePath = `avatars/${fileName}`
+
+      // 上传到 storage bucket 'avatars' (需提前创建)
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file, { upsert: true })
+
+      if (uploadError) throw uploadError
+
+      // 获取公开 URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath)
+
+      // 更新 profiles 表的 avatar_url
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ avatar_url: publicUrl })
+        .eq('id', user.id)
+
+      if (updateError) throw updateError
+
+      // 更新本地状态
+      setProfile(prev => ({ ...prev, avatar_url: publicUrl }))
+      alert('头像上传成功！')
+    } catch (error) {
+      console.error('头像上传失败:', error)
+      alert('头像上传失败，请重试')
+    } finally {
+      setUploading(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-wimbledon-white flex items-center justify-center">
@@ -232,7 +292,45 @@ function Profile() {
       <div className="max-w-4xl mx-auto">
         {/* 头部导航 */}
         <div className="flex items-center justify-between mb-6">
-          <div className="w-16"></div>
+          <div className="relative">
+            {/* 头像显示与上传区域 */}
+            <div className="w-16 h-16 rounded-full overflow-hidden bg-gradient-to-br from-gray-200 to-gray-300 border-2 border-white shadow-md">
+              {profile?.avatar_url ? (
+                <img
+                  src={profile.avatar_url}
+                  alt="头像"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-gray-500">
+                  <span className="text-2xl font-bold">
+                    {profile?.username?.charAt(0) || profile?.email?.charAt(0) || '?'}
+                  </span>
+                </div>
+              )}
+            </div>
+            {/* 上传按钮 */}
+            <label className="absolute -bottom-1 -right-1 bg-wimbledon-green hover:bg-wimbledon-grass text-white w-6 h-6 rounded-full flex items-center justify-center cursor-pointer shadow-sm">
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleAvatarFileChange}
+                disabled={uploading}
+              />
+              {uploading ? (
+                <svg className="w-3 h-3 animate-spin text-white" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+              ) : (
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              )}
+            </label>
+          </div>
           <h1 className="font-wimbledon text-2xl font-bold text-wimbledon-green">
             {t('profile.title')}
           </h1>

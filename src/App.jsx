@@ -40,6 +40,14 @@ function Home() {
   // 导入国际化
   const { t, currentLanguage, setLanguage } = useTranslation()
 
+  // 推荐卡片图片URL
+  const recommendationImages = {
+    video: 'https://finjgjjqcyjdaucyxchp.supabase.co/storage/v1/object/public/tennis-journey/examples/forehand_1.jpg',
+    brand: 'https://finjgjjqcyjdaucyxchp.supabase.co/storage/v1/object/public/tennis-journey/examples/serve_3.jpg',
+    event: 'https://finjgjjqcyjdaucyxchp.supabase.co/storage/v1/object/public/tennis-journey/examples/split_step_2.jpg',
+    plan: 'https://finjgjjqcyjdaucyxchp.supabase.co/storage/v1/object/public/tennis-journey/examples/forehand_1.jpg'
+  }
+
   useEffect(() => {
     checkProfileStatus()
     fetchStats()
@@ -186,6 +194,7 @@ function Home() {
           like_count,
           comment_count,
           repost_count,
+          media_urls,
           profiles:user_id (
             username,
             avatar_url
@@ -237,13 +246,23 @@ function Home() {
         const date = new Date(post.created_at)
         const formattedDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
         
+        // 从media_urls提取第一张图片URL（支持逗号分隔的字符串）
+        let imageUrl = null
+        if (post.media_urls && post.media_urls.trim() !== '') {
+          const urls = post.media_urls.split(',').map(url => url.trim()).filter(url => url.length > 0)
+          if (urls.length > 0) {
+            imageUrl = urls[0]
+          }
+        }
+        
         return {
           id: post.id,
           title: title,
           author: post.profiles?.username || '管理员',
           date: formattedDate,
           likes: post.like_count || 0,
-          comments: post.comment_count || 0
+          comments: post.comment_count || 0,
+          imageUrl: imageUrl
         }
       })
       
@@ -490,9 +509,28 @@ function Home() {
                 onClick={() => navigate(`/community/post/${post.id}`)}
               >
                 <div className="aspect-video bg-gradient-to-br from-gray-100 to-gray-200 relative overflow-hidden">
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-4xl">🎾</span>
-                  </div>
+                  {post.imageUrl ? (
+                    <>
+                      <img
+                        src={post.imageUrl}
+                        alt={post.title}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.target.style.display = 'none'
+                          // 回退显示网球图标
+                          const fallback = document.createElement('div')
+                          fallback.className = 'absolute inset-0 flex items-center justify-center'
+                          fallback.innerHTML = '<span class="text-4xl">🎾</span>'
+                          e.target.parentNode.appendChild(fallback)
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+                    </>
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span className="text-4xl">🎾</span>
+                    </div>
+                  )}
                   <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1 text-xs font-medium">
                     {post.likes} {t('home.community.card_likes')}
                   </div>
@@ -524,14 +562,22 @@ function Home() {
             <div className="flex space-x-6">
               <div className="flex-shrink-0 w-80">
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                  <div className="aspect-video bg-gradient-to-br from-blue-50 to-blue-100 relative overflow-hidden">
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-16 h-16 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center">
-                        <span className="text-2xl">▶️</span>
+                  <div className="aspect-video relative overflow-hidden">
+                    <img
+                      src={recommendationImages.video}
+                      alt={t('home.recommendations.video_title')}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+                    <div className="absolute top-4 left-4">
+                      <div className="bg-gradient-to-r from-wimbledon-green to-wimbledon-grass text-white text-xs font-medium px-3 py-1 rounded-full">
+                        {t('home.recommendations.video_tag')}
                       </div>
                     </div>
-                    <div className="absolute bottom-4 left-4 bg-gradient-to-r from-wimbledon-green to-wimbledon-grass text-white text-xs font-medium px-3 py-1 rounded-full">
-                      {t('home.recommendations.video_tag')}
+                    <div className="absolute bottom-4 left-4">
+                      <div className="w-12 h-12 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center">
+                        <span className="text-xl">▶️</span>
+                      </div>
                     </div>
                   </div>
                   <div className="p-6">
@@ -547,9 +593,15 @@ function Home() {
               <div className="flex-shrink-0 w-80">
                 <div className="bg-gradient-to-br from-wimbledon-green to-wimbledon-grass rounded-2xl shadow-sm overflow-hidden">
                   <div className="aspect-video relative overflow-hidden">
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
-                        <span className="text-3xl">🏆</span>
+                    <img
+                      src={recommendationImages.brand}
+                      alt={t('home.recommendations.brand_title')}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+                    <div className="absolute top-4 left-4">
+                      <div className="bg-white/20 backdrop-blur-sm text-white text-xs font-medium px-3 py-1 rounded-full">
+                        {t('home.recommendations.brand_title')}
                       </div>
                     </div>
                   </div>
@@ -565,12 +617,17 @@ function Home() {
 
               <div className="flex-shrink-0 w-80">
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                  <div className="aspect-video bg-gradient-to-br from-orange-50 to-orange-100 relative overflow-hidden">
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <span className="text-4xl">📅</span>
-                    </div>
-                    <div className="absolute bottom-4 left-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white text-xs font-medium px-3 py-1 rounded-full">
-                      {t('home.recommendations.event_tag')}
+                  <div className="aspect-video relative overflow-hidden">
+                    <img
+                      src={recommendationImages.event}
+                      alt={t('home.recommendations.event_title')}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+                    <div className="absolute top-4 left-4">
+                      <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white text-xs font-medium px-3 py-1 rounded-full">
+                        {t('home.recommendations.event_tag')}
+                      </div>
                     </div>
                   </div>
                   <div className="p-6">
@@ -585,12 +642,17 @@ function Home() {
 
               <div className="flex-shrink-0 w-80">
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                  <div className="aspect-video bg-gradient-to-br from-green-50 to-green-100 relative overflow-hidden">
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <span className="text-4xl">💪</span>
-                    </div>
-                    <div className="absolute bottom-4 left-4 bg-gradient-to-r from-green-500 to-green-600 text-white text-xs font-medium px-3 py-1 rounded-full">
-                      {t('home.recommendations.plan_tag')}
+                  <div className="aspect-video relative overflow-hidden">
+                    <img
+                      src={recommendationImages.plan}
+                      alt={t('home.recommendations.plan_title')}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+                    <div className="absolute top-4 left-4">
+                      <div className="bg-gradient-to-r from-green-500 to-green-600 text-white text-xs font-medium px-3 py-1 rounded-full">
+                        {t('home.recommendations.plan_tag')}
+                      </div>
                     </div>
                   </div>
                   <div className="p-6">
