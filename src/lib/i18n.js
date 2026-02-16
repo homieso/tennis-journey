@@ -156,7 +156,20 @@ const translations = {
     'community.collapse': '收起',
     'community.photo_count': '{count}张图片',
     'community.reposted_from': '转发自',
-    
+
+    // 创建帖子
+    'create_post.title': '创建帖子',
+    'create_post.content_placeholder': '分享你的网球故事、心得或问题...',
+    'create_post.max_images': '最多只能上传 {count} 张图片',
+    'create_post.invalid_format': '只支持 JPG/PNG/WEBP/GIF 格式',
+    'create_post.file_too_large': '单张图片不能超过2MB',
+    'create_post.content_or_image_required': '请填写内容或上传图片',
+    'create_post.preview_alt': '预览图片 {index}',
+    'create_post.upload_images': '上传图片',
+    'create_post.publishing': '发布中...',
+    'create_post.publish': '发布',
+    'create_post.format_hint': '支持最多3张图片，每张不超过2MB',
+
     // 打卡页面
     'dailylog.title': '第 {day} 天 · {type}',
     'dailylog.back_to_challenge': '← 返回挑战',
@@ -279,6 +292,17 @@ const translations = {
     'community.collapse': 'Collapse',
     'community.photo_count': '{count} photos',
     'community.reposted_from': 'Reposted from',
+    'create_post.title': 'Create Post',
+    'create_post.content_placeholder': 'Share your tennis story, tips, or questions...',
+    'create_post.max_images': 'Maximum {count} images',
+    'create_post.invalid_format': 'Only JPG/PNG/WEBP/GIF formats are supported',
+    'create_post.file_too_large': 'Each image must be under 2MB',
+    'create_post.content_or_image_required': 'Please write content or upload an image',
+    'create_post.preview_alt': 'Preview image {index}',
+    'create_post.upload_images': 'Upload images',
+    'create_post.publishing': 'Publishing...',
+    'create_post.publish': 'Publish',
+    'create_post.format_hint': 'Up to 3 images, each under 2MB',
   },
   
   zh_tw: {
@@ -367,6 +391,17 @@ const translations = {
     'community.collapse': '收起',
     'community.photo_count': '{count}張圖片',
     'community.reposted_from': '轉發自',
+    'create_post.title': '創建帖子',
+    'create_post.content_placeholder': '分享你的網球故事、心得或問題...',
+    'create_post.max_images': '最多只能上傳 {count} 張圖片',
+    'create_post.invalid_format': '只支援 JPG/PNG/WEBP/GIF 格式',
+    'create_post.file_too_large': '單張圖片不能超過2MB',
+    'create_post.content_or_image_required': '請填寫內容或上傳圖片',
+    'create_post.preview_alt': '預覽圖片 {index}',
+    'create_post.upload_images': '上傳圖片',
+    'create_post.publishing': '發佈中...',
+    'create_post.publish': '發佈',
+    'create_post.format_hint': '支援最多3張圖片，每張不超過2MB',
   }
 }
 
