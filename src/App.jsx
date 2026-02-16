@@ -42,10 +42,10 @@ function Home() {
 
   // 推荐卡片图片URL - 替换为网球相关图标/图片
   const recommendationImages = {
-    video: 'https://images.unsplash.com/photo-1595435934247-5d33b7f92c5c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80', // 网球拍
-    brand: 'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80', // 网球
-    event: 'https://images.unsplash.com/photo-1622279457486-62dcc4a431b6?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80', // 网球比赛
-    plan: 'https://images.unsplash.com/photo-1622279457551-2c8e23d6bca7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'  // 网球训练
+    video: 'https://img.youtube.com/vi/5arVdubK9Pg/maxresdefault.jpg', // 正手击球教学视频缩略图
+    brand: 'https://images.unsplash.com/photo-1595435934247-5d33b7f92c5c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80', // Wilson网球拍
+    event: 'https://images.unsplash.com/photo-1622279457486-62dcc4a431b6?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80', // 网球比赛（温网）
+    plan: 'https://img.youtube.com/vi/VxrCA7S9b1U/maxresdefault.jpg'  // 网球体能训练视频缩略图
   }
 
   useEffect(() => {
