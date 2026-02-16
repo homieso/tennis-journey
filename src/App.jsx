@@ -43,8 +43,8 @@ function Home() {
   // 推荐卡片图片URL - 替换为网球相关图标/图片
   const recommendationImages = {
     video: 'https://img.youtube.com/vi/5arVdubK9Pg/maxresdefault.jpg', // 正手击球教学视频缩略图
-    brand: '/icons/tennis-racquet.svg', // Wilson网球拍图标
-    event: '/icons/trophy.svg', // 温网奖杯图标
+    brand: 'https://finjgjjqcyjdaucyxchp.supabase.co/storage/v1/object/public/tennis-journey/home/wilson-logo.jpg', // Wilson品牌logo
+    event: 'https://finjgjjqcyjdaucyxchp.supabase.co/storage/v1/object/public/tennis-journey/home/wimbledon.jpg', // 温网赛事图片
     plan: 'https://img.youtube.com/vi/VxrCA7S9b1U/maxresdefault.jpg'  // 网球体能训练视频缩略图
   }
 
