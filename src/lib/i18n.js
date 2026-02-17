@@ -98,6 +98,7 @@ const translations = {
     'challenge.final_submit_note': '请在最终提交前检查落实资料。',
     'challenge.today_log_description': '上传你的训练照片，记录今日心得',
     'challenge.makeup_log_description': '补打第{day}天的卡',
+    'challenge.loading_calendar': '加载日历中...',
     
     // 个人主页
     'profile.title': '个人主页',

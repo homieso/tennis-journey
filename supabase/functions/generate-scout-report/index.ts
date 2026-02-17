@@ -5,6 +5,13 @@ serve(async (req) => {
   try {
     const { user_id, test_mode } = await req.json()
     
+    // 检测域名，决定报告语言
+    const origin = req.headers.get('origin') || req.headers.get('referer') || ''
+    const isChineseDomain = origin.includes('tennisjourney.top')
+    const isEnglishDomain = origin.includes('tj-7.vercel.app')
+    // 默认根据域名决定语言，如果没有域名信息则使用中文
+    const reportLanguage = isEnglishDomain ? 'en' : 'zh'
+    
     const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
     const supabase = createClient(supabaseUrl, supabaseKey)
@@ -74,19 +81,73 @@ serve(async (req) => {
       }))
     }
 
-    // 3. 调用 DeepSeek API 生成结构化报告
-    const deepseekResponse = await fetch('https://api.deepseek.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${Deno.env.get('DEEPSEEK_API_KEY')}`,
-      },
-      body: JSON.stringify({
-        model: 'deepseek-chat',
-        messages: [
-          {
-            role: 'system',
-            content: `你是一位专业的网球教练和球探。根据用户7天的训练记录和个人档案，生成一份结构化的"球探报告"。
+    // 3. 调用 DeepSeek API 生成结构化报告，根据域名语言选择提示词
+    const systemPrompt = reportLanguage === 'en'
+      ? `You are a professional tennis coach and scout. Generate a structured "scout report" based on the user's 7-day training logs and personal profile.
+
+Return a strict JSON object with the following fields:
+
+{
+  "cover": {
+    "title": "Your 7-Day Tennis Journey Report",
+    "subtitle": "Personalized AI Scout Report",
+    "date": "Generation date",
+    "user_name": "Username"
+  },
+  "profile": {
+    "gender": "Gender",
+    "playing_years": "Years playing",
+    "ntrp": "NTRP self-rating",
+    "idol": "Idol",
+    "style": "Tennis style",
+    "summary": "Style characteristics summary"
+  },
+  "stats": {
+    "total_days": 7,
+    "total_photos": "Total photos",
+    "latest_log_time": "Latest log time",
+    "most_frequent_exercise": "Most frequent exercise",
+    "keywords": ["Keyword1", "Keyword2", "Keyword3"]
+  },
+  "analysis": {
+    "strengths": ["Strength1", "Strength2", "Strength3"],
+    "improvements": ["Area to improve1", "Area to improve2"],
+    "technical_insights": "Technical analysis summary"
+  },
+  "recommendations": [
+    {
+      "title": "Recommendation title",
+      "description": "Recommendation description",
+      "frequency": "Training frequency",
+      "icon": "Icon name"
+    }
+  ],
+  "player_comparison": {
+    "player_name": "Player comparison",
+    "similarities": ["Similarity1", "Similarity2", "Similarity3"],
+    "differences": ["Difference1", "Difference2"],
+    "radar_chart": {
+      "serve": 0-100,
+      "baseline": 0-100,
+      "net_play": 0-100,
+      "movement": 0-100,
+      "tactics": 0-100
+    }
+  },
+  "achievements": {
+    "badge": "Badge name",
+    "badge_description": "Badge description",
+    "next_goal": "Next goal"
+  }
+}
+
+Requirements:
+1. All fields must be in English
+2. Generate realistic data based on user profile and training logs
+3. Extract keywords from training logs
+4. Radar chart values should be reasonably assessed based on user skill level
+5. Choose a professional player with a similar style to the user for comparison`
+      : `你是一位专业的网球教练和球探。根据用户7天的训练记录和个人档案，生成一份结构化的"球探报告"。
 
 请返回一个严格的JSON对象，包含以下字段：
 
@@ -149,11 +210,23 @@ serve(async (req) => {
 2. 基于用户档案和打卡记录生成真实数据
 3. 关键词从打卡记录中提取
 4. 雷达图数值基于用户技术水平合理评估
-5. 对比球员选择与用户风格相似的职业球员`
-          },
-          {
-            role: 'user',
-            content: `用户档案：
+5. 对比球员选择与用户风格相似的职业球员`;
+
+    const userContent = reportLanguage === 'en'
+      ? `User profile:
+- Gender: ${profile.gender}
+- Years playing: ${profile.playing_years} years
+- NTRP self‑rating: ${profile.self_rated_ntrp}
+- Idol: ${profile.idol}
+- Style: ${profile.tennis_style}
+- Age: ${profile.age || 'Not set'}
+- Location: ${profile.location || 'Not set'}
+
+7‑day training logs:
+${logs.map((log, i) => `Day ${i+1}: ${log.text_content} (photos: ${log.image_urls?.length || 0})`).join('\n')}
+
+Please generate the structured scout report JSON.`
+      : `用户档案：
 - 性别：${profile.gender}
 - 球龄：${profile.playing_years}年
 - NTRP自评：${profile.self_rated_ntrp}
@@ -165,7 +238,24 @@ serve(async (req) => {
 7天训练记录：
 ${logs.map((log, i) => `第${i+1}天：${log.text_content} (照片数：${log.image_urls?.length || 0})`).join('\n')}
 
-请生成结构化的球探报告JSON。`
+请生成结构化的球探报告JSON。`;
+
+    const deepseekResponse = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${Deno.env.get('DEEPSEEK_API_KEY')}`,
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {
+            role: 'system',
+            content: systemPrompt
+          },
+          {
+            role: 'user',
+            content: userContent
           }
         ],
         temperature: 0.7,
@@ -182,8 +272,39 @@ ${logs.map((log, i) => `第${i+1}天：${log.text_content} (照片数：${log.im
 
     const structuredReport = JSON.parse(deepseekData.choices[0].message.content)
     
-    // 生成HTML内容用于向后兼容
-    const reportContent = `
+    // 生成HTML内容用于向后兼容，根据语言适配
+    const reportContent = reportLanguage === 'en'
+      ? `
+# ${structuredReport.cover.title}
+
+## 1. User Profile
+**Style Characteristics**: ${structuredReport.profile.summary}
+**Technical Keywords**: ${structuredReport.stats.keywords.join(', ')}
+**Idol Influence**: ${structuredReport.profile.idol}
+
+## 2. Data Analysis
+**Log Statistics**: ${structuredReport.stats.total_days} days, ${structuredReport.stats.total_photos} photos
+**Most Frequent Exercise**: ${structuredReport.stats.most_frequent_exercise}
+**Technical Strengths**: ${structuredReport.analysis.strengths.join(', ')}
+
+## 3. Training Recommendations
+${structuredReport.recommendations.map((rec, i) => `
+**${i+1}. ${rec.title}**
+${rec.description}
+Frequency: ${rec.frequency}
+`).join('\n')}
+
+## 4. Player Comparison
+**Compared Player**: ${structuredReport.player_comparison.player_name}
+**Similarities**: ${structuredReport.player_comparison.similarities.join(', ')}
+**Differences**: ${structuredReport.player_comparison.differences.join(', ')}
+
+## 5. Achievements & Goals
+**Badge Earned**: ${structuredReport.achievements.badge}
+**Badge Description**: ${structuredReport.achievements.badge_description}
+**Next Goal**: ${structuredReport.achievements.next_goal}
+    `
+      : `
 # ${structuredReport.cover.title}
 
 ## 一、用户概况
@@ -232,8 +353,10 @@ ${rec.description}
 
     if (insertError) throw insertError
 
-    // 5. 自动发布为社区首帖（产品设计：7天完成 → 报告生成 → 自动发布）
-    const postContent = `${structuredReport.cover?.title || '我的7天网球球探报告'} 🎾\n\n${structuredReport.profile?.summary || ''}`
+    // 5. 自动发布为社区首帖（产品设计：7天完成 → 报告生成 → 自动发布），根据语言适配
+    const postContent = reportLanguage === 'en'
+      ? `${structuredReport.cover?.title || 'My 7‑Day Tennis Scout Report'} 🎾\n\n${structuredReport.profile?.summary || ''}`
+      : `${structuredReport.cover?.title || '我的7天网球球探报告'} 🎾\n\n${structuredReport.profile?.summary || ''}`
     const { data: post, error: postError } = await supabase
       .from('posts')
       .insert([
