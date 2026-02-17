@@ -47,7 +47,7 @@ function PostCard({ post, onLikeUpdate, onCommentUpdate, onRepostUpdate, onDelet
   }, [])
   
   // 根据当前语言获取本地化内容
-  const getLocalizedContent = () => {
+  function getLocalizedContent() {
     // 优先使用多语言字段
     if (currentLanguage === 'zh' && post.content_zh) return post.content_zh
     if (currentLanguage === 'en' && post.content_en) return post.content_en
