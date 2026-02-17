@@ -199,7 +199,8 @@ function DailyLog() {
             image_urls: allImageUrls,
             text_content: textContent,
             status: 'pending',
-            updated_at: new Date()
+            updated_at: new Date(),
+            submitted_at: new Date()
           })
           .eq('id', existingLog.id)
 
@@ -213,7 +214,8 @@ function DailyLog() {
               log_date: targetDateStr,
               image_urls: allImageUrls,
               text_content: textContent,
-              status: 'pending'
+              status: 'pending',
+              submitted_at: new Date()
             }
           ])
 

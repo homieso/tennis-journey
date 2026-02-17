@@ -13,15 +13,19 @@ function Community() {
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(true)
+  const [error, setError] = useState(null)
   const PAGE_SIZE = 10
 
   useEffect(() => {
+    console.log('Community useEffect triggered, page:', page)
     fetchPosts()
   }, [page])
 
   const fetchPosts = async () => {
     try {
       setLoading(true)
+      setError(null)
+      console.log('Fetching posts, page:', page)
       
       // 获取帖子，同时联表查询用户档案和新的社交字段
       const { data, error } = await supabase
@@ -48,9 +52,11 @@ function Community() {
         .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1)
 
       if (error) {
-        console.error('社区帖子查询错误:', error.message, error.code)
+        console.error('社区帖子查询错误:', error.message, error.code, error.details)
+        setError(error)
         throw error
       }
+      console.log('Fetched posts:', data?.length, 'data:', data)
 
       if (page === 1) {
         setPosts(data || [])
@@ -61,6 +67,7 @@ function Community() {
       setHasMore(data?.length === PAGE_SIZE)
     } catch (error) {
       console.error('获取帖子失败:', error)
+      setError(error)
     } finally {
       setLoading(false)
     }
@@ -137,6 +144,21 @@ function Community() {
 
       {/* 帖子流 */}
       <div className="container mx-auto px-4 py-6 max-w-2xl">
+        <div className="hidden">
+          Debug: posts length = {posts.length}, loading = {loading ? 'true' : 'false'}, error = {error ? error.message : 'null'}
+        </div>
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-2xl p-6 mb-4">
+            <h3 className="text-red-700 font-semibold mb-2">加载失败</h3>
+            <p className="text-red-600 text-sm mb-3">{error.message}</p>
+            <button
+              onClick={() => fetchPosts()}
+              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm"
+            >
+              重试
+            </button>
+          </div>
+        )}
         {posts.length === 0 && !loading ? (
           <div className="bg-white rounded-2xl shadow-md p-12 text-center">
             <span className="text-5xl mb-4 block">🏌️‍♂️</span>
@@ -146,6 +168,12 @@ function Community() {
             <p className="text-gray-500 text-sm mb-6">
               {t('community.no_posts_desc')}
             </p>
+            <button
+              onClick={() => fetchPosts()}
+              className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-3 rounded-xl transition-colors mr-4"
+            >
+              手动刷新
+            </button>
             <Link
               to="/challenge"
               className="inline-block bg-wimbledon-grass hover:bg-wimbledon-green text-white px-6 py-3 rounded-xl transition-colors"

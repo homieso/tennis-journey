@@ -2,29 +2,31 @@
 // 置底菜单栏 - 全局导航
 
 import { NavLink } from 'react-router-dom'
+import { useTranslation } from '../lib/i18n'
 
 function BottomNav() {
+  const { t } = useTranslation()
   const navItems = [
     {
       path: '/',
       icon: '🏠',
-      label: '首页',
+      labelKey: 'nav.home',
       exact: true
     },
     {
       path: '/challenge',
       icon: '🎾',
-      label: '挑战'
+      labelKey: 'nav.challenge'
     },
     {
       path: '/community',
       icon: '🌍',
-      label: '社区'
+      labelKey: 'nav.community'
     },
     {
       path: '/profile',
       icon: '👤',
-      label: '我的'
+      labelKey: 'nav.profile'
     }
   ]
 
@@ -44,7 +46,7 @@ function BottomNav() {
           }
         >
           <span className="text-xl mb-1">{item.icon}</span>
-          <span className="text-xs">{item.label}</span>
+          <span className="text-xs">{t(item.labelKey)}</span>
         </NavLink>
       ))}
     </div>

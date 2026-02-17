@@ -106,24 +106,35 @@ function Challenge() {
         let status = 'locked'
         let isToday = false
 
-        // 第1天总是解锁
-        if (i === 0) {
-          status = 'pending'
-        }
-
         // 如果有打卡记录，状态由记录决定
         if (log) {
           status = log.status // pending / approved / rejected
-        } else if (i > 0) {
-          // 检查前一天是否完成
-          const prevDate = new Date(start)
-          prevDate.setDate(start.getDate() + (i - 1))
-          const prevDateStr = toLocalDateStr(prevDate)
-          const prevLog = logs?.find(l => l.log_date === prevDateStr)
-          
-          // 只有前一天是 approved，今天才解锁
-          if (prevLog?.status === 'approved') {
+        } else {
+          // 没有打卡记录
+          if (i === 0) {
+            // 第1天总是解锁
             status = 'pending'
+          } else if (i > 0) {
+            // 检查前一天是否有打卡记录（任何状态）
+            const prevDate = new Date(start)
+            prevDate.setDate(start.getDate() + (i - 1))
+            const prevDateStr = toLocalDateStr(prevDate)
+            const prevLog = logs?.find(l => l.log_date === prevDateStr)
+            
+            if (prevLog && prevLog.submitted_at) {
+              // 计算是否已过24小时（从提交时间起）
+              const submittedTime = new Date(prevLog.submitted_at).getTime()
+              const now = Date.now()
+              const hours24 = 24 * 60 * 60 * 1000
+              if (now - submittedTime >= hours24) {
+                status = 'pending'
+              } else {
+                status = 'locked'
+              }
+            } else {
+              // 前一天没有打卡记录，保持锁定
+              status = 'locked'
+            }
           }
         }
 
