@@ -190,6 +190,15 @@ const translations = {
     'community.collapse': '收起',
     'community.photo_count': '{count}张图片',
     'community.reposted_from': '转发自',
+    'community.manual_refresh': '手动刷新',
+    'community.already_reposted': '您已经转发过此帖子',
+    'community.repost_success': '转发成功！可以在你的个人主页查看',
+    'community.default_repost_content': '转发分享',
+
+    // 管理员
+    'admin.only_admin_delete': '只有管理员可以删除帖子',
+    'admin.delete_confirm': '确定要删除这个帖子吗？删除后无法恢复。',
+    'admin.delete_success': '帖子删除成功',
 
     // 创建帖子
     'create_post.title': '创建帖子',
@@ -228,6 +237,17 @@ const translations = {
     'dailylog.update': '更新打卡',
     'dailylog.submitting': '提交中...',
     'dailylog.update_note': '⏎ 更新后会重新进入待审核状态',
+
+    // Example photo captions
+    'dailylog.example_photo_captions.forehand': '正手练习',
+    'dailylog.example_photo_captions.split_step': '垫步练习',
+    'dailylog.example_photo_captions.serve': '发球练习',
+    // Example bullet points
+    'dailylog.example_bullet.forehand': '• 正手练习——右手持拍，充分侧身向前挥拍，确保击球点在身体前方。',
+    'dailylog.example_bullet.split_step': '• 垫步练习——双腿站在边线，膝盖微弯，准备启动垫步。',
+    'dailylog.example_bullet.serve': '• 发球练习——右手持拍置于后背，“奖杯式”举拍，充分顶肘向前向上挥拍。',
+    // Common
+    'common.close': '关闭',
     
     // 错误消息
     'error.required_photos': '请至少上传一张训练照片',
@@ -237,6 +257,15 @@ const translations = {
     'error.file_too_large': '单张照片不能超过2MB',
     'error.submission_failed': '提交失败，请重试',
     'error.login_required': '请先登录',
+    'error.fetch_challenge_failed': '获取挑战数据失败',
+    'error.final_submit_failed': '提交失败，请稍后重试',
+    'error.fetch_profile_failed': '获取个人资料失败',
+    'error.fetch_social_data_failed': '获取社交数据失败',
+    'error.report_generation_failed': '生成球探报告失败',
+    'error.report_not_completed_challenge': '用户尚未完成7天挑战',
+    'error.report_not_found': '球探报告不存在',
+    'error.load_failed': '加载失败',
+    'error.retry': '重试',
   },
   
   en: {
@@ -350,6 +379,13 @@ const translations = {
     'community.collapse': 'Collapse',
     'community.photo_count': '{count} photos',
     'community.reposted_from': 'Reposted from',
+    'community.manual_refresh': 'Manual refresh',
+    'community.already_reposted': 'You have already reposted this post',
+    'community.repost_success': 'Repost successful! You can view it on your profile.',
+    'community.default_repost_content': 'Repost share',
+    'admin.only_admin_delete': 'Only administrators can delete posts',
+    'admin.delete_confirm': 'Are you sure you want to delete this post? It cannot be recovered after deletion.',
+    'admin.delete_success': 'Post deleted successfully',
     'create_post.title': 'Create Post',
     'create_post.content_placeholder': 'Share your tennis story, tips, or questions...',
     'create_post.max_images': 'Maximum {count} images',
@@ -361,6 +397,63 @@ const translations = {
     'create_post.publishing': 'Publishing...',
     'create_post.publish': 'Publish',
     'create_post.format_hint': 'Up to 3 images, each under 2MB',
+
+    // Daily log page
+    'dailylog.title': 'Day {day} · {type}',
+    'dailylog.back_to_challenge': '← Back to Challenge',
+    'dailylog.edit_mode': 'Edit Log',
+    'dailylog.today_log': 'Today\'s Log',
+    'dailylog.makeup_log': 'Make-up Log',
+    'dailylog.example': 'Log Example',
+    'dailylog.example_view': 'Click to view',
+    'dailylog.example_modal.title': 'Admin Log Example',
+    'dailylog.example_modal.description': 'This is a real log example provided by the admin. Upload photos and text that match the example quality to speed up review.',
+    'dailylog.photos.title': 'Training photos {editable}',
+    'dailylog.photos.editable': '(editable)',
+    'dailylog.photos.uploaded': 'Uploaded photos:',
+    'dailylog.photos.new': 'New photos:',
+    'dailylog.photos.upload': 'Click to upload photos',
+    'dailylog.photos.format': 'Supports JPG/PNG/WEBP, each ≤2MB',
+    'dailylog.content.title': 'Training reflections',
+    'dailylog.content.edit_mode': '(edit mode)',
+    'dailylog.content.edit_note': 'Resubmitting after modification will overwrite the existing record.',
+    'dailylog.content.review_note': 'Submitted logs will be reviewed by admin.',
+    'dailylog.submit': 'Submit log',
+    'dailylog.update': 'Update log',
+    'dailylog.submitting': 'Submitting...',
+    'dailylog.update_note': '⏎ After updating, it will return to pending review.',
+
+    // Example photo captions
+    'dailylog.example_photo_captions.forehand': 'Forehand practice',
+    'dailylog.example_photo_captions.split_step': 'Split‑step practice',
+    'dailylog.example_photo_captions.serve': 'Serve practice',
+    // Example bullet points
+    'dailylog.example_bullet.forehand': '• Forehand practice—Right‑handed grip, full body rotation, ensure contact point in front of the body.',
+    'dailylog.example_bullet.split_step': '• Split‑step practice—Stand on the baseline, knees slightly bent, ready to initiate split‑step.',
+    'dailylog.example_bullet.serve': '• Serve practice—Right‑handed grip placed behind the back, "trophy pose" racket lift, fully extend elbow forward and upward.',
+    // Common
+    'common.close': 'Close',
+
+    // Error messages
+    'error.required_photos': 'Please upload at least one training photo',
+    'error.required_content': 'Please fill in your training reflections',
+    'error.max_photos': 'You can upload up to 3 photos',
+    'error.invalid_format': 'Only JPG/PNG/WEBP formats are supported',
+    'error.file_too_large': 'Each photo must be under 2MB',
+    'error.submission_failed': 'Submission failed, please try again',
+    'error.login_required': 'Please log in first',
+    'error.no_challenge_start_date': 'User does not have a challenge start date',
+    'error.check_log_failed': 'Failed to check log records',
+    'error.delete_file_failed': 'Failed to delete file',
+    'error.fetch_challenge_failed': 'Failed to fetch challenge data',
+    'error.final_submit_failed': 'Submission failed, please try again later',
+    'error.fetch_profile_failed': 'Failed to fetch profile data',
+    'error.fetch_social_data_failed': 'Failed to fetch social data',
+    'error.report_generation_failed': 'Scout report generation failed',
+    'error.report_not_completed_challenge': 'User has not completed 7-day challenge',
+    'error.report_not_found': 'Scout report not found',
+    'error.load_failed': 'Load failed',
+    'error.retry': 'Retry',
 
     // 挑战页面
     'challenge.title': '7-Day Challenge',
@@ -505,6 +598,16 @@ const translations = {
     'community.collapse': '收起',
     'community.photo_count': '{count}張圖片',
     'community.reposted_from': '轉發自',
+    'community.manual_refresh': '手動刷新',
+    'community.already_reposted': '您已經轉發過此帖子',
+    'community.repost_success': '轉發成功！可以在你的個人主頁查看',
+    'community.default_repost_content': '轉發分享',
+
+    // 管理員
+    'admin.only_admin_delete': '只有管理員可以刪除帖子',
+    'admin.delete_confirm': '確定要刪除這個帖子嗎？刪除後無法恢復。',
+    'admin.delete_success': '帖子刪除成功',
+
     'create_post.title': '創建帖子',
     'create_post.content_placeholder': '分享你的網球故事、心得或問題...',
     'create_post.max_images': '最多只能上傳 {count} 張圖片',
@@ -516,6 +619,42 @@ const translations = {
     'create_post.publishing': '發佈中...',
     'create_post.publish': '發佈',
     'create_post.format_hint': '支援最多3張圖片，每張不超過2MB',
+
+    // 打卡頁面
+    'dailylog.title': '第 {day} 天 · {type}',
+    'dailylog.back_to_challenge': '← 返回挑戰',
+    'dailylog.edit_mode': '編輯打卡',
+    'dailylog.today_log': '今日打卡',
+    'dailylog.makeup_log': '補打卡',
+    'dailylog.example': '打卡示範',
+    'dailylog.example_view': '點擊查看',
+    'dailylog.example_modal.title': '管理員打卡示範',
+    'dailylog.example_modal.description': '這是管理員提供的真實打卡示範。上傳符合示例質量的照片和文字，有助於更快通過審核。',
+    'dailylog.photos.title': '訓練照片 {editable}',
+    'dailylog.photos.editable': '(可編輯)',
+    'dailylog.photos.uploaded': '已上傳照片：',
+    'dailylog.photos.new': '新上傳照片：',
+    'dailylog.photos.upload': '點擊上傳照片',
+    'dailylog.photos.format': '支援 JPG/PNG/WEBP，單張≤2MB',
+    'dailylog.content.title': '訓練心得',
+    'dailylog.content.edit_mode': '(編輯模式)',
+    'dailylog.content.edit_note': '修改後重新提交會覆蓋原有記錄',
+    'dailylog.content.review_note': '提交後由管理員審核',
+    'dailylog.submit': '提交打卡',
+    'dailylog.update': '更新打卡',
+    'dailylog.submitting': '提交中...',
+    'dailylog.update_note': '⏎ 更新後會重新進入待審核狀態',
+
+    // Example photo captions
+    'dailylog.example_photo_captions.forehand': '正手練習',
+    'dailylog.example_photo_captions.split_step': '墊步練習',
+    'dailylog.example_photo_captions.serve': '發球練習',
+    // Example bullet points
+    'dailylog.example_bullet.forehand': '• 正手練習——右手持拍，充分側身向前揮拍，確保擊球點在身體前方。',
+    'dailylog.example_bullet.split_step': '• 墊步練習——雙腿站在邊線，膝蓋微彎，準備啟動墊步。',
+    'dailylog.example_bullet.serve': '• 發球練習——右手持拍置於後背，「獎杯式」舉拍，充分頂肘向前向上揮拍。',
+    // Common
+    'common.close': '關閉',
 
     // 挑戰頁面
     'challenge.title': '7天挑戰',
@@ -538,6 +677,22 @@ const translations = {
     'challenge.complete.description': '你的球探報告正在生成中，預計1-2分鐘。',
     'challenge.complete.view_report': '查看我的球探報告',
     'challenge.loading_calendar': '載入你的挑戰日曆...',
+
+    // 錯誤消息
+    'error.required_photos': '請至少上傳一張訓練照片',
+    'error.required_content': '請填寫訓練心得',
+    'error.max_photos': '最多只能上傳3張照片',
+    'error.invalid_format': '只支援 JPG/PNG/WEBP 格式',
+    'error.file_too_large': '單張照片不能超過2MB',
+    'error.submission_failed': '提交失敗，請重試',
+    'error.login_required': '請先登入',
+    'error.no_challenge_start_date': '用戶沒有挑戰開始日期',
+    'error.check_log_failed': '檢查打卡記錄失敗',
+    'error.delete_file_failed': '刪除文件失敗',
+    'error.fetch_challenge_failed': '獲取挑戰數據失敗',
+    'error.final_submit_failed': '提交失敗，請稍後重試',
+    'error.fetch_profile_failed': '獲取個人資料失敗',
+    'error.fetch_social_data_failed': '獲取社交數據失敗',
   }
 }
 

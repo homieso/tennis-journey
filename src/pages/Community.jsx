@@ -149,13 +149,13 @@ function Community() {
         </div>
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-2xl p-6 mb-4">
-            <h3 className="text-red-700 font-semibold mb-2">加载失败</h3>
+            <h3 className="text-red-700 font-semibold mb-2">{t('error.load_failed')}</h3>
             <p className="text-red-600 text-sm mb-3">{error.message}</p>
             <button
               onClick={() => fetchPosts()}
               className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm"
             >
-              重试
+              {t('error.retry')}
             </button>
           </div>
         )}
@@ -172,7 +172,7 @@ function Community() {
               onClick={() => fetchPosts()}
               className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-3 rounded-xl transition-colors mr-4"
             >
-              手动刷新
+              {t('community.manual_refresh')}
             </button>
             <Link
               to="/challenge"

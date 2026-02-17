@@ -143,7 +143,7 @@ function PostCard({ post, onLikeUpdate, onCommentUpdate, onRepostUpdate, onDelet
     }
     
     if (reposted) {
-      alert('您已经转发过此帖子')
+      alert(t('community.already_reposted'))
       return
     }
     
@@ -157,7 +157,7 @@ function PostCard({ post, onLikeUpdate, onCommentUpdate, onRepostUpdate, onDelet
         .insert([
           {
             user_id: currentUser.id,
-            content: comment || '转发分享',
+            content: comment || t('community.default_repost_content'),
             original_post_id: post.id,
             like_count: 0,
             comment_count: 0,
@@ -196,7 +196,7 @@ function PostCard({ post, onLikeUpdate, onCommentUpdate, onRepostUpdate, onDelet
       
       setReposted(true)
       onRepostUpdate?.(post.id, 'increment')
-      alert('转发成功！可以在你的个人主页查看')
+      alert(t('community.repost_success'))
       
     } catch (error) {
       console.error('转发失败:', error)
@@ -244,11 +244,11 @@ function PostCard({ post, onLikeUpdate, onCommentUpdate, onRepostUpdate, onDelet
 
     const adminUserId = 'dcee2e34-45f0-4506-9bac-4bdf0956273c'
     if (currentUser.id !== adminUserId) {
-      alert('只有管理员可以删除帖子')
+      alert(t('admin.only_admin_delete'))
       return
     }
 
-    const confirmed = window.confirm('确定要删除这个帖子吗？删除后无法恢复。')
+    const confirmed = window.confirm(t('admin.delete_confirm'))
     if (!confirmed) return
 
     setDeleting(true)
@@ -260,7 +260,7 @@ function PostCard({ post, onLikeUpdate, onCommentUpdate, onRepostUpdate, onDelet
 
       if (error) throw error
 
-      alert('帖子删除成功')
+      alert(t('admin.delete_success'))
       // 通知父组件更新
       if (typeof onDelete === 'function') {
         onDelete(post.id)
