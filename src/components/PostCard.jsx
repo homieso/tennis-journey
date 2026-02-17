@@ -8,7 +8,7 @@ import { getCurrentUser } from '../lib/auth'
 import { useTranslation } from '../lib/i18n'
 
 function PostCard({ post, onLikeUpdate, onCommentUpdate, onRepostUpdate, onDelete }) {
-  const { t } = useTranslation()
+  const { t, currentLanguage } = useTranslation()
   const navigate = useNavigate()
   
   // 本地状态
@@ -30,7 +30,8 @@ function PostCard({ post, onLikeUpdate, onCommentUpdate, onRepostUpdate, onDelet
   
   // 帖子内容行数计算
   const MAX_LINES = 3
-  const contentLines = post.content ? post.content.split('\n').length : 0
+  const localizedContent = getLocalizedContent()
+  const contentLines = localizedContent ? localizedContent.split('\n').length : 0
   const shouldShowExpand = contentLines > MAX_LINES
   
   // 获取当前用户
@@ -45,6 +46,16 @@ function PostCard({ post, onLikeUpdate, onCommentUpdate, onRepostUpdate, onDelet
     fetchCurrentUser()
   }, [])
   
+  // 根据当前语言获取本地化内容
+  const getLocalizedContent = () => {
+    // 优先使用多语言字段
+    if (currentLanguage === 'zh' && post.content_zh) return post.content_zh
+    if (currentLanguage === 'en' && post.content_en) return post.content_en
+    if (currentLanguage === 'zh_tw' && post.content_zh_tw) return post.content_zh_tw
+    // 回退到原始内容
+    return post.content || ''
+  }
+
   // 检查用户是否已点赞/转发
   const checkUserInteractions = async (userId) => {
     if (!post?.id) return
@@ -204,7 +215,7 @@ function PostCard({ post, onLikeUpdate, onCommentUpdate, onRepostUpdate, onDelet
       try {
         await navigator.share({
           title: 'Tennis Journey 帖子分享',
-          text: post.content?.substring(0, 100) || '看看这个网球相关的帖子',
+          text: localizedContent?.substring(0, 100) || '看看这个网球相关的帖子',
           url: postUrl,
         })
         return
@@ -368,14 +379,14 @@ function PostCard({ post, onLikeUpdate, onCommentUpdate, onRepostUpdate, onDelet
         {/* 帖子内容 */}
         <div className="ml-13 pl-2">
           {/* 文字内容 */}
-          {post.content && (
+          {localizedContent && (
             <div className="mb-3">
-              <p 
+              <p
                 className={`text-gray-700 text-sm leading-relaxed whitespace-pre-wrap ${
                   !expanded && shouldShowExpand ? 'line-clamp-3' : ''
                 }`}
               >
-                {post.content}
+                {localizedContent}
               </p>
               
               {/* 展开/收起按钮 */}

@@ -195,15 +195,15 @@ function Profile() {
     
     if (diff < 60 * 60 * 1000) {
       const minutes = Math.floor(diff / (60 * 1000))
-      return `${minutes}分钟前`
+      return t('community.minutes_ago', { minutes })
     }
     if (diff < 24 * 60 * 60 * 1000) {
       const hours = Math.floor(diff / (60 * 60 * 1000))
-      return `${hours}小时前`
+      return t('community.hours_ago', { hours })
     }
     if (diff < 7 * 24 * 60 * 60 * 1000) {
       const days = Math.floor(diff / (24 * 60 * 60 * 1000))
-      return `${days}天前`
+      return t('community.days_ago', { days })
     }
     return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`
   }
@@ -271,27 +271,27 @@ function Profile() {
 
         {/* 社交统计卡片 */}
         <div className="bg-gradient-to-r from-wimbledon-green/10 to-wimbledon-grass/10 rounded-2xl shadow-md p-6 mb-6">
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">社交统计</h2>
+          <h2 className="text-lg font-semibold text-gray-800 mb-4">{t('profile.social_stats.title')}</h2>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             <div className="text-center">
               <div className="text-2xl font-bold text-wimbledon-green">{socialStats.totalLikesReceived}</div>
-              <div className="text-xs text-gray-600">获赞总数</div>
+              <div className="text-xs text-gray-600">{t('profile.social_stats.total_likes_received')}</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-wimbledon-green">{socialStats.totalPosts}</div>
-              <div className="text-xs text-gray-600">发布帖子</div>
+              <div className="text-xs text-gray-600">{t('profile.social_stats.total_posts')}</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-wimbledon-green">{socialStats.totalReposts}</div>
-              <div className="text-xs text-gray-600">转发帖子</div>
+              <div className="text-xs text-gray-600">{t('profile.social_stats.total_reposts')}</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-wimbledon-green">{socialStats.totalLikesGiven}</div>
-              <div className="text-xs text-gray-600">点赞过的</div>
+              <div className="text-xs text-gray-600">{t('profile.social_stats.total_likes_given')}</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-wimbledon-green">{socialStats.totalCommentsGiven}</div>
-              <div className="text-xs text-gray-600">评论过的</div>
+              <div className="text-xs text-gray-600">{t('profile.social_stats.total_comments_given')}</div>
             </div>
           </div>
         </div>
@@ -303,19 +303,19 @@ function Profile() {
               onClick={() => setSocialTab('posts')}
               className={`pb-3 px-1 font-medium ${socialTab === 'posts' ? 'text-wimbledon-green border-b-2 border-wimbledon-green' : 'text-gray-500'}`}
             >
-              我的帖子 ({socialStats.totalPosts})
+              {t('profile.social_stats.my_posts')} ({socialStats.totalPosts})
             </button>
             <button
               onClick={() => setSocialTab('reposts')}
               className={`pb-3 px-1 font-medium ${socialTab === 'reposts' ? 'text-wimbledon-green border-b-2 border-wimbledon-green' : 'text-gray-500'}`}
             >
-              转发的 ({socialStats.totalReposts})
+              {t('profile.social_stats.reposts')} ({socialStats.totalReposts})
             </button>
             <button
               onClick={() => setSocialTab('interactions')}
               className={`pb-3 px-1 font-medium ${socialTab === 'interactions' ? 'text-wimbledon-green border-b-2 border-wimbledon-green' : 'text-gray-500'}`}
             >
-              互动记录
+              {t('profile.social_stats.interactions')}
             </button>
           </div>
 
@@ -345,12 +345,12 @@ function Profile() {
                       >
                         {postsExpanded ? (
                           <>
-                            <span>收起</span>
+                            <span>{t('profile.social_stats.collapse')}</span>
                             <span className="transform rotate-180">▼</span>
                           </>
                         ) : (
                           <>
-                            <span>展开全部 ({userPosts.length - POSTS_VISIBLE_LIMIT} 条)</span>
+                            <span>{t('profile.social_stats.expand_all')} ({userPosts.length - POSTS_VISIBLE_LIMIT} 条)</span>
                             <span>▼</span>
                           </>
                         )}
@@ -361,13 +361,13 @@ function Profile() {
               ) : (
                 <div className="text-center py-8">
                   <span className="text-4xl mb-4 block">📝</span>
-                  <p className="text-gray-500 mb-2">还没有发布过帖子</p>
-                  <p className="text-sm text-gray-400">去社区广场分享你的网球故事吧</p>
+                  <p className="text-gray-500 mb-2">{t('profile.social_stats.no_posts_yet')}</p>
+                  <p className="text-sm text-gray-400">{t('profile.social_stats.go_to_community')}</p>
                   <button
                     onClick={() => navigate('/community')}
                     className="mt-4 bg-wimbledon-grass hover:bg-wimbledon-green text-white px-4 py-2 rounded-lg text-sm"
                   >
-                    去社区逛逛 →
+                    {t('profile.social_stats.go_to_community')}
                   </button>
                 </div>
               )}
@@ -384,7 +384,7 @@ function Profile() {
                       {/* 转发标识 */}
                       <div className="flex items-center text-sm text-gray-500 mb-2">
                         <span className="mr-1">🔄</span>
-                        <span>你转发了</span>
+                        <span>{t('profile.social_stats.reposted_by_you')}</span>
                       </div>
                       
                       {/* 原帖信息 */}
@@ -395,7 +395,7 @@ function Profile() {
                               {post.original_post.profiles?.username?.charAt(0) || 'U'}
                             </div>
                             <span className="text-sm font-medium">
-                              @{post.original_post.profiles?.username || '用户'}
+                              @{post.original_post.profiles?.username || t('community.default_user')}
                             </span>
                           </div>
                           <p className="text-sm text-gray-700 line-clamp-2">{post.original_post.content}</p>
@@ -409,8 +409,8 @@ function Profile() {
                       
                       {/* 统计信息 */}
                       <div className="flex items-center text-xs text-gray-500">
-                        <span className="mr-4">❤️ {post.like_count || 0} 赞</span>
-                        <span className="mr-4">💬 {post.comment_count || 0} 评论</span>
+                        <span className="mr-4">❤️ {post.like_count || 0} {t('community.like')}</span>
+                        <span className="mr-4">💬 {post.comment_count || 0} {t('community.comment')}</span>
                         <span>📅 {formatTime(post.created_at)}</span>
                       </div>
                     </div>
@@ -419,8 +419,8 @@ function Profile() {
               ) : (
                 <div className="text-center py-8">
                   <span className="text-4xl mb-4 block">🔄</span>
-                  <p className="text-gray-500 mb-2">还没有转发过帖子</p>
-                  <p className="text-sm text-gray-400">在社区广场发现有趣的内容可以转发分享</p>
+                  <p className="text-gray-500 mb-2">{t('profile.social_stats.no_reposts_yet')}</p>
+                  <p className="text-sm text-gray-400">{t('profile.social_stats.repost_hint')}</p>
                 </div>
               )}
             </div>
@@ -431,7 +431,7 @@ function Profile() {
             <div>
               {/* 点赞过的帖子 */}
               <div className="mb-8">
-                <h3 className="font-medium text-gray-800 mb-4">点赞过的帖子 ({userLikes.length})</h3>
+                <h3 className="font-medium text-gray-800 mb-4">{t('profile.social_stats.liked_posts')} ({userLikes.length})</h3>
                 {userLikes.length > 0 ? (
                   <div className="space-y-3">
                     {userLikes.map((post) => (
@@ -450,14 +450,14 @@ function Profile() {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-gray-500 text-sm text-center py-4">还没有点赞过任何帖子</p>
+                  <p className="text-gray-500 text-sm text-center py-4">{t('profile.social_stats.no_liked_posts')}</p>
                 )}
               </div>
 
               {/* 评论过的帖子（暂未实现） */}
               <div>
-                <h3 className="font-medium text-gray-800 mb-4">评论过的帖子</h3>
-                <p className="text-gray-500 text-sm text-center py-4">评论功能即将上线</p>
+                <h3 className="font-medium text-gray-800 mb-4">{t('profile.social_stats.commented_posts')}</h3>
+                <p className="text-gray-500 text-sm text-center py-4">{t('profile.social_stats.comments_coming_soon')}</p>
               </div>
             </div>
           )}

@@ -16,9 +16,11 @@ import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { getCurrentUser } from '../lib/auth'
+import { useTranslation } from '../lib/i18n'
 
 function Challenge() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const [days, setDays] = useState([])
   const [loading, setLoading] = useState(true)
   const [startDate, setStartDate] = useState(null)
@@ -134,7 +136,7 @@ function Challenge() {
         daysArray.push({
           day: i + 1,
           status: status,
-          date: `第${i + 1}天`,
+          date: t('challenge.day', { day: i + 1 }),
           logDate: dateStr,
           hasLog: !!log,
           isToday: isToday,
@@ -200,7 +202,7 @@ function Challenge() {
   if (loading) {
     return (
       <div className="min-h-screen bg-wimbledon-white pb-24 flex items-center justify-center">
-        <div className="text-wimbledon-green">加载你的挑战日历...</div>
+        <div className="text-wimbledon-green">{t('challenge.loading_calendar')}</div>
       </div>
     )
   }
@@ -226,10 +228,10 @@ function Challenge() {
         {/* 挑战标题与进度 */}
         <div className="text-center mb-6">
           <h2 className="font-wimbledon text-3xl font-bold text-wimbledon-green mb-2">
-            7天挑战
+            {t('challenge.title')}
           </h2>
           <p className="text-gray-600">
-            {startDate ? `开始于：${startDate}` : '连续7天打卡，生成你的专属球探报告'}
+            {startDate ? t('challenge.started_on', { date: startDate }) : t('challenge.description')}
           </p>
         </div>
 
@@ -241,7 +243,7 @@ function Challenge() {
                 <div key={day.day} className="text-center">
                   <div className="text-xs md:text-sm text-gray-500 mb-1 md:mb-2">
                     {day.date}
-                    {day.isToday && <span className="ml-1 text-wimbledon-grass text-xs">今天</span>}
+                    {day.isToday && <span className="ml-1 text-wimbledon-grass text-xs">{t('challenge.today')}</span>}
                   </div>
                   <button
                     onClick={() => {
@@ -266,19 +268,19 @@ function Challenge() {
                       {day.day}
                     </span>
                     {day.status === 'approved' && (
-                      <span className="text-[10px] md:text-xs text-wimbledon-green font-medium">已完成</span>
+                      <span className="text-[10px] md:text-xs text-wimbledon-green font-medium">{t('challenge.status.approved')}</span>
                     )}
                     {day.status === 'pending' && day.hasLog && (
-                      <span className="text-[10px] md:text-xs text-wimbledon-green">待审核</span>
+                      <span className="text-[10px] md:text-xs text-wimbledon-green">{t('challenge.status.pending')}</span>
                     )}
                     {day.status === 'pending' && !day.hasLog && (
-                      <span className="text-[10px] md:text-xs text-wimbledon-green">待打卡</span>
+                      <span className="text-[10px] md:text-xs text-wimbledon-green">{t('challenge.status.waiting')}</span>
                     )}
                     {day.status === 'locked' && (
-                      <span className="text-[10px] md:text-xs text-gray-400">未解锁</span>
+                      <span className="text-[10px] md:text-xs text-gray-400">{t('challenge.status.locked')}</span>
                     )}
                     {day.status === 'rejected' && (
-                      <span className="text-[10px] md:text-xs text-red-500">已拒绝</span>
+                      <span className="text-[10px] md:text-xs text-red-500">{t('challenge.status.rejected')}</span>
                     )}
                   </button>
                 </div>
@@ -292,19 +294,19 @@ function Challenge() {
                   <div className="flex items-center justify-between">
                     <div>
                       <h4 className="font-semibold text-gray-800 mb-1">
-                        第{currentDayEntry.day}天 · {currentDayEntry.isToday ? '今日打卡' : '补打卡'}
+                        {t('challenge.current_day', { day: currentDayEntry.day, type: currentDayEntry.isToday ? t('challenge.today_log') : t('challenge.makeup_log') })}
                       </h4>
                       <p className="text-sm text-gray-600">
-                        {currentDayEntry.isToday 
-                          ? '上传你的训练照片，记录今日心得' 
-                          : '补打第' + currentDayEntry.day + '天的卡'}
+                        {currentDayEntry.isToday
+                          ? t('challenge.today_log_description')
+                          : t('challenge.makeup_log_description', { day: currentDayEntry.day })}
                       </p>
                     </div>
                     <Link
                       to={`/challenge/daily/${currentDayEntry.day}`}
                       className="bg-wimbledon-grass hover:bg-wimbledon-green text-white px-6 py-3 rounded-xl transition-colors whitespace-nowrap"
                     >
-                      去打卡
+                      {t('challenge.go_log')}
                     </Link>
                   </div>
 
@@ -312,10 +314,10 @@ function Challenge() {
                   <div className="mt-4 bg-white rounded-lg p-4 text-sm text-gray-500 border border-gray-200 flex items-start group relative">
                     <span className="text-wimbledon-grass mr-2">📝</span>
                     <span className="flex-1">
-                      <span className="font-medium text-gray-700">示例模板：</span>
-                      分腿垫步练习3组，正手击球50次，发球练习20分钟
+                      <span className="font-medium text-gray-700">{t('challenge.example')}</span>
+                      {t('challenge.example_content')}
                     </span>
-                    <span className="text-gray-300 group-hover:text-wimbledon-grass cursor-help ml-2 transition-colors" title="点击可填充模板">ⓘ</span>
+                    <span className="text-gray-300 group-hover:text-wimbledon-grass cursor-help ml-2 transition-colors" title={t('challenge.example')}>ⓘ</span>
                   </div>
                 </div>
               </div>
@@ -325,10 +327,10 @@ function Challenge() {
             {isPastSevenDays() && challengeStatus === 'in_progress' && (
               <div className="mt-6 p-6 bg-wimbledon-green/10 rounded-xl text-center">
                 <h3 className="font-bold text-wimbledon-green text-lg mb-2">
-                  恭喜 {profileUsername} 完成7天挑战
+                  {t('challenge.congratulations_with_name', { name: profileUsername })}
                 </h3>
                 <p className="text-gray-600 mb-4">
-                  请在最终提交前检查落实资料。
+                  {t('challenge.final_submit_note')}
                 </p>
                 <button
                   type="button"
@@ -336,7 +338,7 @@ function Challenge() {
                   disabled={submitting}
                   className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold px-8 py-3 rounded-xl transition-colors"
                 >
-                  {submitting ? '提交中...' : '最终提交'}
+                  {submitting ? t('challenge.submitting') : t('challenge.final_submit')}
                 </button>
               </div>
             )}
@@ -345,17 +347,17 @@ function Challenge() {
             {challengeStatus === 'awaiting_report' && (
               <div className="mt-6 p-6 bg-wimbledon-green/10 rounded-xl text-center">
                 <h3 className="font-bold text-wimbledon-green text-lg mb-2">
-                  恭喜完成7天挑战
+                  {t('challenge.awaiting_report.title')}
                 </h3>
                 <p className="text-gray-600 mb-4">
-                  报告生成中，预计1-2分钟。生成完成后可在此查看。
+                  {t('challenge.awaiting_report.description')}
                 </p>
                 <button
                   type="button"
                   onClick={() => navigate('/report')}
                   className="bg-wimbledon-green hover:bg-wimbledon-grass text-white px-6 py-3 rounded-xl transition-colors"
                 >
-                  去查看报告
+                  {t('challenge.go_view_report')}
                 </button>
               </div>
             )}
@@ -364,16 +366,16 @@ function Challenge() {
             {challengeStatus === 'success' && (
               <div className="mt-6 p-6 bg-wimbledon-green/10 rounded-xl text-center">
                 <h3 className="font-bold text-wimbledon-green text-lg mb-2">
-                  🎉 恭喜！你已完成7天挑战！
+                  {t('challenge.complete.title')}
                 </h3>
                 <p className="text-gray-600 mb-4">
-                  你的球探报告已生成。
+                  {t('challenge.report_generated_description')}
                 </p>
                 <Link
                   to="/report"
                   className="inline-block bg-wimbledon-green hover:bg-wimbledon-grass text-white px-6 py-3 rounded-xl transition-colors"
                 >
-                  查看我的球探报告
+                  {t('challenge.complete.view_report')}
                 </Link>
               </div>
             )}
@@ -382,16 +384,16 @@ function Challenge() {
             {!isPastSevenDays() && challengeStatus === 'in_progress' && days.every(day => day.status === 'approved') && (
               <div className="mt-6 p-6 bg-wimbledon-green/10 rounded-xl text-center">
                 <h3 className="font-bold text-wimbledon-green text-lg mb-2">
-                  🎉 恭喜！你已完成7天挑战！
+                  {t('challenge.complete.title')}
                 </h3>
                 <p className="text-gray-600 mb-4">
-                  你的球探报告正在生成中，预计1-2分钟。
+                  {t('challenge.complete.description')}
                 </p>
                 <Link
                   to="/report"
                   className="inline-block bg-wimbledon-green hover:bg-wimbledon-grass text-white px-6 py-3 rounded-xl transition-colors"
                 >
-                  查看我的球探报告
+                  {t('challenge.complete.view_report')}
                 </Link>
               </div>
             )}
