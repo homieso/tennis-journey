@@ -1,7 +1,7 @@
 // src/pages/ScoutReportNew.jsx
 // 全新分页滑动式球探报告 - 参考网易云音乐年度报告风格
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { getCurrentUser } from '../lib/auth'
@@ -9,7 +9,7 @@ import { useTranslation } from '../lib/i18n'
 import { Swiper, SwiperSlide } from 'swiper/react'
 import { Navigation, Pagination } from 'swiper/modules'
 import { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, ResponsiveContainer } from 'recharts'
-import ShareReport from '../components/ShareReport'
+import { generateAndPostReportScreenshot, getExistingPost } from '../lib/reportScreenshot'
 
 // 导入Swiper样式
 import 'swiper/css'
@@ -25,6 +25,10 @@ function ScoutReportNew() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [activeSlide, setActiveSlide] = useState(0)
+  const [postInfo, setPostInfo] = useState(null)
+  const [generatingScreenshot, setGeneratingScreenshot] = useState(false)
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false)
+  const reportContainerRef = useRef(null)
 
   useEffect(() => {
     fetchReport()
@@ -157,10 +161,81 @@ function ScoutReportNew() {
     ]
   }
 
-  const handleShare = () => {
-    // 这里可以集成分享功能
-    alert(t('scoutReport.shareFeatureComing'))
+  const handleGenerateAndPostScreenshot = async () => {
+    if (!report || !reportContainerRef.current) {
+      alert('无法生成截图，请稍后重试')
+      return
+    }
+    
+    setGeneratingScreenshot(true)
+    try {
+      const { user } = await getCurrentUser()
+      if (!user) {
+        navigate('/login')
+        return
+      }
+      
+      // 获取用户语言偏好
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('preferred_language')
+        .eq('id', user.id)
+        .single()
+      
+      const language = profile?.preferred_language || 'zh'
+      
+      // 调用长图生成和发帖函数
+      const result = await generateAndPostReportScreenshot(
+        reportContainerRef.current,
+        user.id,
+        report.id,
+        language
+      )
+      
+      setPostInfo(result)
+      setShowSuccessMessage(true)
+      
+      // 5秒后自动隐藏成功消息
+      setTimeout(() => setShowSuccessMessage(false), 5000)
+      
+      console.log('长图生成和发帖成功:', result)
+    } catch (error) {
+      console.error('长图生成和发帖失败:', error)
+      alert(`生成失败: ${error.message}`)
+    } finally {
+      setGeneratingScreenshot(false)
+    }
   }
+
+  const handleShare = () => {
+    // 检查是否已有帖子
+    if (postInfo) {
+      alert('报告已自动发布到社区！你可以在社区中查看你的帖子。')
+      return
+    }
+    
+    // 如果没有帖子，提示用户生成长图并发布
+    if (window.confirm('报告将自动发布到社区，并生成长图分享。是否继续？')) {
+      handleGenerateAndPostScreenshot()
+    }
+  }
+
+  // 检查是否已有帖子
+  useEffect(() => {
+    const checkExistingPost = async () => {
+      if (report?.id) {
+        const existingPost = await getExistingPost(report.id)
+        if (existingPost) {
+          setPostInfo({
+            postId: existingPost.id,
+            screenshotUrl: existingPost.media_urls?.[0] || null
+          })
+        }
+      }
+    }
+    
+    checkExistingPost()
+  }, [report])
 
   if (loading) {
     return (
@@ -209,13 +284,50 @@ function ScoutReportNew() {
             </div>
             <button
               onClick={handleShare}
-              className="text-wimbledon-green hover:text-wimbledon-grass"
+              className={`${postInfo ? 'text-green-600' : 'text-wimbledon-green'} hover:text-wimbledon-grass font-medium`}
+              disabled={generatingScreenshot}
             >
-              {t('scoutReport.share')}
+              {generatingScreenshot ? '发布中...' : (postInfo ? '已发布' : '发布到社区')}
             </button>
           </div>
         </div>
       </div>
+
+      {/* 成功消息 */}
+      {showSuccessMessage && (
+        <div className="container mx-auto px-4 mt-4">
+          <div className="bg-green-50 border border-green-200 rounded-xl p-4 flex items-center justify-between">
+            <div className="flex items-center">
+              <span className="text-green-500 mr-2">✓</span>
+              <span className="text-green-700">报告已成功发布到社区！</span>
+            </div>
+            <button
+              onClick={() => setShowSuccessMessage(false)}
+              className="text-green-500 hover:text-green-700"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 查看社区帖子链接 */}
+      {postInfo && (
+        <div className="container mx-auto px-4 mt-4">
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-center justify-between">
+            <div className="flex items-center">
+              <span className="text-blue-500 mr-2">📢</span>
+              <span className="text-blue-700">你的报告已发布到社区</span>
+            </div>
+            <button
+              onClick={() => navigate('/community')}
+              className="bg-blue-500 text-white px-3 py-1 rounded-lg text-sm hover:bg-blue-600"
+            >
+              查看帖子
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* 分页指示器 */}
       <div className="container mx-auto px-4 py-4">
@@ -224,8 +336,8 @@ function ScoutReportNew() {
             <div
               key={index}
               className={`h-1 rounded-full transition-all duration-300 ${
-                activeSlide === index 
-                  ? 'w-8 bg-wimbledon-green' 
+                activeSlide === index
+                  ? 'w-8 bg-wimbledon-green'
                   : 'w-2 bg-gray-300'
               }`}
             />
@@ -234,7 +346,7 @@ function ScoutReportNew() {
       </div>
 
       {/* 分页滑动报告 */}
-      <div className="container mx-auto px-4 py-6">
+      <div className="container mx-auto px-4 py-6" ref={reportContainerRef}>
         <Swiper
           modules={[Navigation, Pagination]}
           spaceBetween={20}

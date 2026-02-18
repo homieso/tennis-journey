@@ -152,7 +152,7 @@ function Community() {
     // 关闭模态框
     setShowCreateModal(false)
     // 可选：显示成功消息
-    alert('帖子发布成功！')
+    alert(t('post.publish_success'))
   }
 
   return (

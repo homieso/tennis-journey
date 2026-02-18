@@ -15,6 +15,7 @@ function Profile() {
   const [profile, setProfile] = useState(null)
   const [reports, setReports] = useState([])
   const [loading, setLoading] = useState(true)
+  const [isAdmin, setIsAdmin] = useState(false)
   
   // 新增社交相关状态
   const [profileTab, setProfileTab] = useState('profile') // 'profile'（资料）, 'activity'（动态）
@@ -54,6 +55,10 @@ function Profile() {
         return
       }
 
+      // 管理员判断
+      const adminId = 'dcee2e34-45f0-4506-9bac-4bdf0956273c'
+      setIsAdmin(user.id === adminId)
+
       // 获取用户档案
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
@@ -64,12 +69,14 @@ function Profile() {
       if (profileError) throw profileError
       setProfile(profileData)
 
-      // 获取用户的球探报告
+      // 获取用户的球探报告 - 只取已发布的最新一条报告
       const { data: reportsData, error: reportsError } = await supabase
         .from('scout_reports')
         .select('*')
         .eq('user_id', user.id)
+        .eq('is_published', true)
         .order('generated_at', { ascending: false })
+        .limit(1)
 
       if (reportsError) throw reportsError
       setReports(reportsData || [])
@@ -567,6 +574,14 @@ function Profile() {
                     {t('profile.membership.redeem')}
                   </button>
                 </>
+              ) : isAdmin ? (
+                // 管理员专属订阅按钮
+                <button
+                  onClick={() => navigate('/pricing')}
+                  className="bg-wimbledon-grass hover:bg-wimbledon-green text-white px-4 py-2 rounded-lg text-sm transition-colors"
+                >
+                  {t('profile.membership.subscribe')}
+                </button>
               ) : (
                 <button
                   onClick={() => navigate('/challenge')}

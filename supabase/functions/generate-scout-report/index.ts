@@ -12,16 +12,29 @@ serve(async (req) => {
     // 默认根据域名决定语言，如果没有域名信息则使用中文
     let reportLanguage = isEnglishDomain ? 'en' : 'zh'
     
+    // 初始化Supabase客户端
     const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
     const supabase = createClient(supabaseUrl, supabaseKey)
-
-    // 1. 获取用户档案
+    
+    // 获取用户档案（包含语言偏好）
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', user_id)
       .single()
+    
+    // 如果用户有语言偏好，优先使用（支持 zh, en, zh_tw）
+    if (!profileError && profile && profile.preferred_language) {
+      const userPref = profile.preferred_language
+      if (['zh', 'en', 'zh_tw'].includes(userPref)) {
+        reportLanguage = userPref
+        console.log(`使用用户语言偏好: ${userPref}`)
+      }
+    }
+    
+    // 调试日志：显示最终决定的语言
+    console.log(`最终报告语言: ${reportLanguage}, origin: ${origin}`)
 
     if (profileError) {
       // 如果是测试模式，创建模拟档案
@@ -149,6 +162,71 @@ Requirements:
 3. Extract keywords from training logs
 4. Radar chart values should be reasonably assessed based on user skill level
 5. Choose a professional player with a similar style to the user for comparison`
+      : reportLanguage === 'zh_tw'
+      ? `你是一位專業的網球教練和球探。根據用戶7天的訓練記錄和個人檔案，生成一份結構化的「球探報告」。
+
+請返回一個嚴格的JSON對象，包含以下字段：
+
+{
+  "cover": {
+    "title": "你的7天網球之旅報告",
+    "subtitle": "專屬AI球探報告",
+    "date": "生成日期",
+    "user_name": "用戶名"
+  },
+  "profile": {
+    "gender": "性別",
+    "playing_years": "球齡",
+    "ntrp": "NTRP自評",
+    "idol": "偶像",
+    "style": "網球風格",
+    "summary": "風格特徵總結"
+  },
+  "stats": {
+    "total_days": 7,
+    "total_photos": "照片總數",
+    "latest_log_time": "最晚打卡時間",
+    "most_frequent_exercise": "最常練習項目",
+    "keywords": ["關鍵詞1", "關鍵詞2", "關鍵詞3"]
+  },
+  "analysis": {
+    "strengths": ["優勢1", "優勢2", "優勢3"],
+    "improvements": ["待改進1", "待改進2"],
+    "technical_insights": "技術分析總結"
+  },
+  "recommendations": [
+    {
+      "title": "建議標題",
+      "description": "建議描述",
+      "frequency": "訓練頻率",
+      "icon": "圖標名稱"
+    }
+  ],
+  "player_comparison": {
+    "player_name": "對比球員",
+    "similarities": ["相似點1", "相似點2", "相似點3"],
+    "differences": ["差距1", "差距2"],
+    "radar_chart": {
+      "serve": 0-100,
+      "baseline": 0-100,
+      "net_play": 0-100,
+      "movement": 0-100,
+      "tactics": 0-100
+    }
+  },
+  "achievements": {
+    "badge": "勳章名稱",
+    "badge_description": "勳章描述",
+    "next_goal": "下一個目標"
+  }
+}
+
+要求：
+1. 所有字段必須用繁體中文
+2. 基於用戶檔案和打卡記錄生成真實數據
+3. 關鍵詞從打卡記錄中提取
+4. 雷達圖數值基於用戶技術水平合理評估
+5. 對比球員選擇與用戶風格相似的職業球員`
       : `你是一位专业的网球教练和球探。根据用户7天的训练记录和个人档案，生成一份结构化的"球探报告"。
 
 请返回一个严格的JSON对象，包含以下字段：
@@ -228,6 +306,20 @@ Requirements:
 ${logs.map((log, i) => `Day ${i+1}: ${log.text_content} (photos: ${log.image_urls?.length || 0})`).join('\n')}
 
 Please generate the structured scout report JSON.`
+      : reportLanguage === 'zh_tw'
+      ? `用戶檔案：
+- 性別：${profile.gender}
+- 球齡：${profile.playing_years}年
+- NTRP自評：${profile.self_rated_ntrp}
+- 偶像：${profile.idol}
+- 風格：${profile.tennis_style}
+- 年齡：${profile.age || '未設置'}
+- 地區：${profile.location || '未設置'}
+
+7天訓練記錄：
+${logs.map((log, i) => `第${i+1}天：${log.text_content} (照片數：${log.image_urls?.length || 0})`).join('\n')}
+
+請生成結構化的球探報告JSON。`
       : `用户档案：
 - 性别：${profile.gender}
 - 球龄：${profile.playing_years}年
@@ -306,6 +398,37 @@ Frequency: ${rec.frequency}
 **Badge Description**: ${structuredReport.achievements.badge_description}
 **Next Goal**: ${structuredReport.achievements.next_goal}
     `
+      : reportLanguage === 'zh_tw'
+      ? `
+# ${structuredReport.cover.title}
+
+## 一、用戶概況
+**風格特徵**：${structuredReport.profile.summary}
+**技術特點**：${structuredReport.stats.keywords.join('、')}
+**偶像影響**：${structuredReport.profile.idol}
+
+## 二、數據分析
+**打卡統計**：${structuredReport.stats.total_days}天，${structuredReport.stats.total_photos}張照片
+**最常練習**：${structuredReport.stats.most_frequent_exercise}
+**技術優勢**：${structuredReport.analysis.strengths.join('、')}
+
+## 三、訓練建議
+${structuredReport.recommendations.map((rec, i) => `
+**${i+1}. ${rec.title}**
+${rec.description}
+頻率：${rec.frequency}
+`).join('\n')}
+
+## 四、球星對比
+**對比球員**：${structuredReport.player_comparison.player_name}
+**相似之處**：${structuredReport.player_comparison.similarities.join('、')}
+**差距分析**：${structuredReport.player_comparison.differences.join('、')}
+
+## 五、成就與目標
+**獲得勳章**：${structuredReport.achievements.badge}
+**勳章描述**：${structuredReport.achievements.badge_description}
+**下一個目標**：${structuredReport.achievements.next_goal}
+    `
       : `
 # ${structuredReport.cover.title}
 
@@ -356,16 +479,33 @@ ${rec.description}
     if (insertError) throw insertError
 
     // 5. 自动发布为社区首帖（产品设计：7天完成 → 报告生成 → 自动发布），根据语言适配
-    const postContent = reportLanguage === 'en'
-      ? `${structuredReport.cover?.title || 'My 7‑Day Tennis Scout Report'} 🎾\n\n${structuredReport.profile?.summary || ''}`
-      : `${structuredReport.cover?.title || '我的7天网球球探报告'} 🎾\n\n${structuredReport.profile?.summary || ''}`
+    // 准备多语言帖子内容
+    const postContentZh = '我的挑战成功了！快看我的专属球探报告！'
+    const postContentEn = 'I completed the challenge! Check out my exclusive scout report!'
+    const postContentZhTw = '我的挑戰成功了！快看我的專屬球探報告！'
+    
+    // 使用报告标题作为补充内容
+    const reportTitle = structuredReport.cover?.title || (reportLanguage === 'en' ? 'My 7‑Day Tennis Scout Report' : '我的7天网球球探报告')
+    const reportSummary = structuredReport.profile?.summary || ''
+    
     const { data: post, error: postError } = await supabase
       .from('posts')
       .insert([
         {
           user_id: user_id,
           report_id: report.id,
-          content: postContent,
+          content: reportLanguage === 'en' ? postContentEn : postContentZh, // 向后兼容的content字段
+          content_zh: postContentZh,
+          content_en: postContentEn,
+          content_zh_tw: postContentZhTw,
+          media_urls: [], // 长图URL稍后由前端添加
+          media_type: 'none',
+          is_published: true,
+          visibility: 'public',
+          like_count: 0,
+          comment_count: 0,
+          repost_count: 0,
+          view_count: 0,
           created_at: new Date(),
         }
       ])
