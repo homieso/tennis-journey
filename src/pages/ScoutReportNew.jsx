@@ -49,7 +49,7 @@ function ScoutReportNew() {
 
       if (error) {
         if (error.code === 'PGRST116') {
-          setError('暂无球探报告，请先完成7天挑战')
+          setError(t('scoutReport.noReport'))
         } else {
           throw error
         }

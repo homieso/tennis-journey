@@ -188,6 +188,53 @@ function Profile() {
     navigate('/login')
   }
 
+  // 账户注销相关状态
+  const [showDeletionModal, setShowDeletionModal] = useState(false)
+  const [deletionReason, setDeletionReason] = useState('')
+  const [deleting, setDeleting] = useState(false)
+
+  const handleOpenDeletionModal = () => {
+    setShowDeletionModal(true)
+  }
+
+  const handleCloseDeletionModal = () => {
+    setShowDeletionModal(false)
+    setDeletionReason('')
+  }
+
+  const handleDeleteAccount = async () => {
+    setDeleting(true)
+    try {
+      const { user } = await getCurrentUser()
+      if (!user) {
+        alert(t('error.login_required'))
+        return
+      }
+
+      // 更新 profiles 表，设置 deleted_at 和 deletion_reason
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          deleted_at: new Date().toISOString(),
+          deletion_reason: deletionReason.trim() || null
+        })
+        .eq('id', user.id)
+
+      if (error) throw error
+
+      alert(t('account.deletion.success'))
+      // 注销用户
+      await signOut()
+      navigate('/login')
+    } catch (error) {
+      console.error('账户注销失败:', error)
+      alert(t('account.deletion.failed'))
+    } finally {
+      setDeleting(false)
+      setShowDeletionModal(false)
+    }
+  }
+
   const formatTime = (timestamp) => {
     const date = new Date(timestamp)
     const now = new Date()
@@ -542,6 +589,12 @@ function Profile() {
               >
                 {t('profile.feedback_button')}
               </button>
+              <button
+                onClick={handleOpenDeletionModal}
+                className="text-gray-500 hover:text-red-600 text-sm border border-gray-300 hover:border-red-300 px-2 py-1 rounded"
+              >
+                {t('account.deletion.title')}
+              </button>
             </div>
           </div>
           
@@ -665,6 +718,75 @@ function Profile() {
             </div>
           )}
         </div>
+
+        {/* 注销账户按钮 */}
+        <div className="mt-8 pt-8 border-t border-gray-200 text-center">
+          <button
+            onClick={handleOpenDeletionModal}
+            className="border border-gray-300 text-gray-500 hover:text-red-600 hover:border-red-200 text-sm px-4 py-2 rounded-lg transition-colors"
+          >
+            {t('account.deletion.title')}
+          </button>
+          <p className="text-xs text-gray-400 mt-2">
+            {t('account.deletion.description')}
+          </p>
+        </div>
+
+        {/* 注销确认模态框 */}
+        {showDeletionModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
+              <h3 className="text-lg font-bold text-gray-900 mb-2">
+                {t('account.deletion.warning')}
+              </h3>
+              <p className="text-gray-600 mb-4">
+                {t('account.deletion.description')}
+              </p>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  {t('account.deletion.reason_label')}
+                </label>
+                <textarea
+                  value={deletionReason}
+                  onChange={(e) => setDeletionReason(e.target.value)}
+                  placeholder={t('account.deletion.reason_placeholder')}
+                  className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-wimbledon-green focus:border-wimbledon-green"
+                  rows={3}
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  {t('account.deletion.reason_optional')}
+                </p>
+              </div>
+              <div className="flex space-x-3">
+                <button
+                  onClick={handleCloseDeletionModal}
+                  className="flex-1 border border-gray-300 text-gray-700 hover:bg-gray-50 py-3 rounded-lg text-sm font-medium transition-colors"
+                  disabled={deleting}
+                >
+                  {t('account.deletion.cancel')}
+                </button>
+                <button
+                  onClick={handleDeleteAccount}
+                  disabled={deleting}
+                  className="flex-1 bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                >
+                  {deleting ? t('loading') : t('account.deletion.confirm')}
+                </button>
+              </div>
+              <div className="mt-4 pt-4 border-t border-gray-100">
+                <button
+                  onClick={() => {
+                    // 清除挑战记录功能（待实现）
+                    alert(t('account.deletion.clear_challenge'))
+                  }}
+                  className="text-wimbledon-green hover:text-wimbledon-grass text-sm underline"
+                >
+                  {t('account.deletion.clear_challenge')}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

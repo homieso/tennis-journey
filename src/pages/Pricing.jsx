@@ -5,9 +5,11 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getStripe, MONTHLY_PRICE_ID, createCheckoutSession } from '../lib/stripe'
 import { getCurrentUser } from '../lib/auth'
+import { useTranslation } from '../lib/i18n'
 
 function Pricing() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const [loading, setLoading] = useState(false)
 
 const handleSubscribe = async () => {
