@@ -503,7 +503,7 @@ function PostCard({ post, onLikeUpdate, onCommentUpdate, onRepostUpdate, onDelet
               disabled={deleting}
               className="text-red-400 hover:text-red-600 text-sm"
             >
-              {deleting ? '删除中...' : '🗑️ 删除'}
+              {deleting ? t('admin.deleting') : t('admin.delete_button')}
             </button>
           )}
         </div>

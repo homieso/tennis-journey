@@ -74,7 +74,7 @@ function Profile() {
       if (reportsError) throw reportsError
       setReports(reportsData || [])
     } catch (error) {
-      console.error('获取个人资料失败:', error)
+      console.error(t('error.fetch_profile_failed') + ':', error)
     } finally {
       setLoading(false)
     }
@@ -179,7 +179,7 @@ function Profile() {
       })
 
     } catch (error) {
-      console.error('获取社交数据失败:', error)
+      console.error(t('error.fetch_social_data_failed') + ':', error)
     }
   }
 
@@ -246,7 +246,7 @@ function Profile() {
               {profile?.avatar_url ? (
                 <img
                   src={profile.avatar_url}
-                  alt="头像"
+                  alt={t('profile.avatar_alt')}
                   className="w-full h-full object-cover"
                 />
               ) : (
@@ -350,7 +350,7 @@ function Profile() {
                           </>
                         ) : (
                           <>
-                            <span>{t('profile.social_stats.expand_all')} ({userPosts.length - POSTS_VISIBLE_LIMIT} 条)</span>
+                            <span>{t('profile.social_stats.expand_all')} ({userPosts.length - POSTS_VISIBLE_LIMIT} {t('profile.social_stats.posts_unit')})</span>
                             <span>▼</span>
                           </>
                         )}
@@ -441,7 +441,7 @@ function Profile() {
                         </div>
                         <div className="flex-1">
                           <div className="flex items-center justify-between mb-1">
-                            <span className="text-sm font-medium">@{post.profiles?.username || '用户'}</span>
+                            <span className="text-sm font-medium">@{post.profiles?.username || t('profile.default_username')}</span>
                             <span className="text-xs text-gray-500">{formatTime(post.created_at)}</span>
                           </div>
                           <p className="text-sm text-gray-700 line-clamp-2">{post.content}</p>
@@ -540,7 +540,7 @@ function Profile() {
                 onClick={() => navigate('/feedback')}
                 className="text-blue-600 hover:text-blue-800 text-sm"
               >
-                📢 意见反馈
+                {t('profile.feedback_button')}
               </button>
             </div>
           </div>
@@ -615,12 +615,12 @@ function Profile() {
             >
               {profileExpanded ? (
                 <>
-                  <span>收起档案</span>
+                  <span>{t('profile.collapse_profile')}</span>
                   <span className="transform rotate-180">▼</span>
                 </>
               ) : (
                 <>
-                  <span>展开完整档案</span>
+                  <span>{t('profile.expand_full_profile')}</span>
                   <span>▼</span>
                 </>
               )}
