@@ -199,19 +199,19 @@ function ScoutReportNew() {
               onClick={() => navigate('/challenge')}
               className="text-gray-600 hover:text-wimbledon-green"
             >
-              ← 返回
+              ← {t('scoutReport.return')}
             </button>
             <div className="text-center">
               <h1 className="font-wimbledon text-lg font-bold text-gray-800">
-                专属球探报告
+                {t('scoutReport.title')}
               </h1>
-              <p className="text-xs text-gray-500">滑动查看完整报告</p>
+              <p className="text-xs text-gray-500">{t('scoutReport.swipe_hint')}</p>
             </div>
             <button
               onClick={handleShare}
               className="text-wimbledon-green hover:text-wimbledon-grass"
             >
-              分享
+              {t('scoutReport.share')}
             </button>
           </div>
         </div>

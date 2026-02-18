@@ -527,11 +527,20 @@ function Profile() {
                   </p>
                 </div>
               ) : (
-                <p className="text-sm text-gray-600">
-                  {profile?.challenge_status === 'success' 
-                    ? t('profile.membership.challenge_success')
-                    : t('profile.membership.no_membership')}
-                </p>
+                <div>
+                  {profile?.challenge_status === 'success'
+                    ? (
+                      <>
+                        <p className="text-sm text-gray-600 font-medium">
+                          {t('profile.membership.congrats')}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {t('profile.membership.report_reward')}
+                        </p>
+                      </>
+                    )
+                    : <p className="text-sm text-gray-600">{t('profile.membership.no_membership')}</p>}
+                </div>
               )}
             </div>
             
@@ -588,12 +597,6 @@ function Profile() {
                 className="text-blue-600 hover:text-blue-800 text-sm"
               >
                 {t('profile.feedback_button')}
-              </button>
-              <button
-                onClick={handleOpenDeletionModal}
-                className="text-gray-500 hover:text-red-600 text-sm border border-gray-300 hover:border-red-300 px-2 py-1 rounded"
-              >
-                {t('account.deletion.title')}
               </button>
             </div>
           </div>

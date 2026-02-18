@@ -62,13 +62,13 @@ const handleSubscribe = async () => {
             onClick={() => navigate('/')}
             className="text-gray-600 hover:text-wimbledon-green mb-4"
           >
-            ← 返回首页
+            ← {t('pricing.back')}
           </button>
           <h1 className="font-wimbledon text-3xl font-bold text-wimbledon-green mb-4">
-            解锁你的网球进阶之路
+            {t('pricing.title')}
           </h1>
           <p className="text-gray-600 max-w-2xl mx-auto">
-            完成7天挑战后，选择适合你的方式继续享受AI球探报告服务
+            {t('pricing.description')}
           </p>
         </div>
 
@@ -79,34 +79,34 @@ const handleSubscribe = async () => {
           <div className="bg-white rounded-2xl shadow-md p-8 flex flex-col">
             <div className="mb-6">
               <span className="inline-block px-3 py-1 bg-wimbledon-grass/10 text-wimbledon-green rounded-full text-sm font-medium mb-4">
-                🌍 国际支付
+                {t('pricing.internationalPayment')}
               </span>
-              <h2 className="text-2xl font-bold text-gray-800 mb-2">月付订阅</h2>
+              <h2 className="text-2xl font-bold text-gray-800 mb-2">{t('pricing.monthlyCardTitle')}</h2>
               <div className="flex items-end mb-4">
-                <span className="text-4xl font-bold text-wimbledon-green">$5</span>
+                <span className="text-4xl font-bold text-wimbledon-green">{t('pricing.monthlyPrice')}</span>
                 <span className="text-gray-500 ml-2">/月</span>
               </div>
               <p className="text-gray-600 text-sm">
-                使用 Stripe 安全支付，支持全球信用卡
+                {t('pricing.stripePayment')}
               </p>
             </div>
             
             <ul className="space-y-3 mb-8 flex-grow">
               <li className="flex items-start text-sm text-gray-600">
                 <span className="text-wimbledon-grass mr-2">✓</span>
-                无限次生成球探报告
+                {t('pricing.unlimitedReports')}
               </li>
               <li className="flex items-start text-sm text-gray-600">
                 <span className="text-wimbledon-grass mr-2">✓</span>
-                查看历史打卡记录
+                {t('pricing.viewHistory')}
               </li>
               <li className="flex items-start text-sm text-gray-600">
                 <span className="text-wimbledon-grass mr-2">✓</span>
-                参与社区讨论
+                {t('pricing.communityDiscussion')}
               </li>
               <li className="flex items-start text-sm text-gray-600">
                 <span className="text-wimbledon-grass mr-2">✓</span>
-                可随时取消
+                {t('pricing.cancelAnyTime')}
               </li>
             </ul>
 
@@ -115,10 +115,10 @@ const handleSubscribe = async () => {
               disabled={loading}
               className="w-full bg-wimbledon-grass hover:bg-wimbledon-green text-white font-semibold px-6 py-3 rounded-xl transition-colors disabled:opacity-50"
             >
-              {loading ? '跳转支付中...' : '订阅月付 $5'}
+              {loading ? t('pricing.subscribeLoading') : t('pricing.subscribeButton')}
             </button>
             <p className="text-xs text-gray-400 text-center mt-3">
-              测试模式 · 不会真实扣款
+              {t('pricing.testMode')}
             </p>
           </div>
 
@@ -126,34 +126,34 @@ const handleSubscribe = async () => {
           <div className="bg-white rounded-2xl shadow-md p-8 flex flex-col border-2 border-wimbledon-grass">
             <div className="mb-6">
               <span className="inline-block px-3 py-1 bg-wimbledon-green text-white rounded-full text-sm font-medium mb-4">
-                🇨🇳 国内用户推荐
+                {t('pricing.domesticUsersRecommend')}
               </span>
-              <h2 className="text-2xl font-bold text-gray-800 mb-2">激活码兑换</h2>
+              <h2 className="text-2xl font-bold text-gray-800 mb-2">{t('pricing.redeemCardTitle')}</h2>
               <div className="flex items-end mb-4">
-                <span className="text-4xl font-bold text-wimbledon-green">¥35</span>
+                <span className="text-4xl font-bold text-wimbledon-green">{t('pricing.monthlyPriceCny')}</span>
                 <span className="text-gray-500 ml-2">/月</span>
               </div>
               <p className="text-gray-600 text-sm">
-                通过淘宝/微店购买激活码，输入即可兑换
+                {t('pricing.redeemPayment')}
               </p>
             </div>
             
             <ul className="space-y-3 mb-8 flex-grow">
               <li className="flex items-start text-sm text-gray-600">
                 <span className="text-wimbledon-grass mr-2">✓</span>
-                支付宝/微信支付
+                {t('pricing.alipayWechat')}
               </li>
               <li className="flex items-start text-sm text-gray-600">
                 <span className="text-wimbledon-grass mr-2">✓</span>
-                无需国际信用卡
+                {t('pricing.noIntlCard')}
               </li>
               <li className="flex items-start text-sm text-gray-600">
                 <span className="text-wimbledon-grass mr-2">✓</span>
-                即时到账
+                {t('pricing.instantActivation')}
               </li>
               <li className="flex items-start text-sm text-gray-600">
                 <span className="text-wimbledon-grass mr-2">✓</span>
-                可购买多个月份
+                {t('pricing.multipleMonths')}
               </li>
             </ul>
 
@@ -161,10 +161,10 @@ const handleSubscribe = async () => {
               onClick={handleActivationCode}
               className="w-full bg-wimbledon-green hover:bg-wimbledon-grass text-white font-semibold px-6 py-3 rounded-xl transition-colors"
             >
-              输入激活码
+              {t('pricing.redeemButton')}
             </button>
             <p className="text-xs text-gray-400 text-center mt-3">
-              前往淘宝/微店搜索「Tennis Journey」购买
+              {t('pricing.redeemHint')}
             </p>
           </div>
         </div>
@@ -172,10 +172,10 @@ const handleSubscribe = async () => {
         {/* 提示信息 */}
         <div className="mt-12 text-center">
           <p className="text-sm text-gray-500">
-            🎉 完成7天挑战的用户自动获得30天免费会员
+            {t('pricing.freeMembership')}
           </p>
           <p className="text-xs text-gray-400 mt-2">
-            所有支付均通过 Stripe 或第三方平台处理，我们不会存储你的支付信息
+            {t('pricing.paymentNote')}
           </p>
         </div>
       </div>

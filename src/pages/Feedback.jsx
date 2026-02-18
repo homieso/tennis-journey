@@ -56,7 +56,7 @@ function Feedback() {
     
     // 限制最多3张图片
     if (files.length > 3) {
-      alert('最多只能上传3张图片')
+      alert(t('feedback.max_images_alert'))
       return
     }
     
@@ -67,13 +67,13 @@ function Feedback() {
       for (const file of files.slice(0, 3)) {
         // 检查文件类型
         if (!file.type.match('image/(jpeg|png|jpg|webp)')) {
-          alert('只支持 JPG、PNG、WEBP 格式的图片')
+          alert(t('feedback.invalid_format_alert'))
           continue
         }
         
         // 检查文件大小（限制2MB）
         if (file.size > 2 * 1024 * 1024) {
-          alert(`图片 ${file.name} 超过2MB限制`)
+          alert(t('feedback.file_too_large_alert', { name: file.name }))
           continue
         }
         
@@ -89,7 +89,7 @@ function Feedback() {
       
     } catch (error) {
       console.error('文件上传失败:', error)
-      alert('文件上传失败，请重试')
+      alert(t('feedback.upload_failed'))
     } finally {
       setUploading(false)
     }
@@ -107,12 +107,12 @@ function Feedback() {
     
     // 验证必填字段
     if (!formData.title.trim()) {
-      alert('请填写反馈标题')
+      alert(t('feedback.title_label') + ' is required')
       return
     }
     
     if (!formData.content.trim()) {
-      alert('请填写反馈内容')
+      alert(t('feedback.content_label') + ' is required')
       return
     }
     
@@ -148,7 +148,7 @@ function Feedback() {
       
     } catch (error) {
       console.error('提交反馈失败:', error)
-      alert('提交失败，请重试')
+      alert(t('feedback.error'))
     } finally {
       setLoading(false)
     }
@@ -164,28 +164,28 @@ function Feedback() {
         <div className="max-w-2xl mx-auto">
           <div className="text-center py-12">
             <span className="text-6xl mb-4 block">✅</span>
-            <h1 className="text-2xl font-bold text-gray-900 mb-4">感谢您的反馈！</h1>
+            <h1 className="text-2xl font-bold text-gray-900 mb-4">{t('feedback.thanks')}</h1>
             <p className="text-gray-600 mb-8">
-              我们已经收到您的意见和建议，会尽快处理并回复。
+              {t('feedback.thanks_message')}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button
                 onClick={() => setSubmitted(false)}
                 className="bg-wimbledon-grass hover:bg-wimbledon-green text-white px-6 py-3 rounded-xl font-medium"
               >
-                提交新的反馈
+                {t('feedback.new_feedback')}
               </button>
               <button
                 onClick={handleViewMyFeedback}
                 className="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 px-6 py-3 rounded-xl font-medium"
               >
-                查看我的反馈
+                {t('feedback.view_my_feedback')}
               </button>
               <button
                 onClick={() => navigate('/')}
                 className="text-gray-600 hover:text-gray-900 px-6 py-3 font-medium"
               >
-                返回首页
+                {t('feedback.return_home')}
               </button>
             </div>
           </div>
@@ -204,11 +204,11 @@ function Feedback() {
             className="text-gray-600 hover:text-gray-900 mb-4 flex items-center"
           >
             <span className="text-xl mr-1">←</span>
-            返回
+            {t('feedback.back')}
           </button>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">意见反馈</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">{t('feedback.title')}</h1>
           <p className="text-gray-600">
-            欢迎提出宝贵意见，帮助我们改进 Tennis Journey
+            {t('feedback.notes_title')}
           </p>
         </div>
         
