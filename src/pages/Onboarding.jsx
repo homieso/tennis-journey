@@ -74,6 +74,13 @@ const checkUserAndProfile = async (editMode = false) => {
       
       if (error) throw error
       
+      // 网球风格选项用于检测是否为预定义风格
+      const styleOptions = ['底线型', '上网型', '全场型', '防守反击型', '大力发球型', '自定义/多样化']
+      const savedStyle = data.tennis_style || ''
+      const isPredefined = styleOptions.includes(savedStyle)
+      const tennisStyle = isPredefined ? savedStyle : '自定义/多样化'
+      const customStyle = isPredefined ? '' : savedStyle
+      
       setFormData({
         username: data.username || '',
         bio: data.bio || '',
@@ -81,8 +88,8 @@ const checkUserAndProfile = async (editMode = false) => {
         playingYears: data.playing_years || '',
         selfRatedNtrp: data.self_rated_ntrp || 3.0,
         idol: data.idol || '',
-        tennisStyle: data.tennis_style || '',
-        customStyle: '',
+        tennisStyle,
+        customStyle,
         age: data.age || '',
         location: data.location || '',
         equipment: data.equipment || '',
