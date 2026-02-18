@@ -1,16 +1,137 @@
-# React + Vite
+# Tennis Journey 🎾
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+一个帮助网球爱好者通过7天打卡生成AI球探报告的Web应用。
 
-Currently, two official plugins are available:
+## ✨ 功能特性
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **用户注册/登录** - 基于Supabase的身份验证
+- **7天挑战打卡** - 每日图文记录训练内容
+- **AI球探报告生成** - 基于DeepSeek API的个性化报告
+- **双语国际化** - 支持中文/英文/繁体中文
+- **社区广场** - 帖子发布、点赞、评论、转发
+- **个人主页社交统计** - 展示用户的社交互动数据
+- **支付集成** - Stripe国际支付 + 激活码国内支付
+- **会员系统** - 完成挑战获得30天免费会员
 
-## React Compiler
+## 🛠️ 技术栈
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **前端**：React + Vite + Tailwind CSS
+- **后端/数据库**：Supabase (PostgreSQL + Auth + Storage)
+- **AI服务**：DeepSeek API
+- **支付**：Stripe
+- **部署**：Vercel
+- **国际化**：自定义i18n框架
 
-## Expanding the ESLint configuration
+## 🚀 快速开始
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### 前置要求
+
+- Node.js 18+ 和 npm
+- Supabase 账户（免费层即可）
+- DeepSeek API 密钥（可选，用于报告生成）
+
+### 1. 克隆仓库
+
+```bash
+git clone https://github.com/your-username/tennis-journey.git
+cd tennis-journey
+```
+
+### 2. 安装依赖
+
+```bash
+npm install
+```
+
+### 3. 环境变量配置
+
+复制 `.env.example` 为 `.env` 并填入你的配置：
+
+```bash
+cp .env.example .env
+```
+
+编辑 `.env` 文件：
+
+```env
+VITE_SUPABASE_URL=你的Supabase项目URL
+VITE_SUPABASE_ANON_KEY=你的Supabase匿名密钥
+VITE_STRIPE_PUBLISHABLE_KEY=你的Stripe公钥
+VITE_DEEPSEEK_API_KEY=你的DeepSeek API密钥（可选）
+```
+
+### 4. 数据库设置
+
+1. 在Supabase控制台创建新项目
+2. 执行SQL脚本初始化数据库（见 `supabase/` 目录）
+3. 启用存储桶并配置RLS策略
+
+### 5. 启动开发服务器
+
+```bash
+npm run dev
+```
+
+应用将在 `http://localhost:5173` 运行。
+
+### 6. 部署到Vercel
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fyour-username%2Ftennis-journey)
+
+## 📁 项目结构
+
+```
+tennis-journey/
+├── public/              # 静态资源
+├── src/
+│   ├── components/      # 可复用组件
+│   ├── lib/            # 工具库（认证、i18n、Supabase）
+│   ├── pages/          # 页面组件
+│   ├── App.jsx         # 主应用组件
+│   └── main.jsx        # 应用入口
+├── supabase/
+│   ├── functions/      # Edge Functions
+│   └── SQL脚本         # 数据库初始化
+├── LICENSE             # MIT许可证
+└── README.md           # 本文档
+```
+
+## 🔧 配置说明
+
+### 国际化
+
+项目支持三种语言：
+- 简体中文 (`zh`) - 默认语言
+- 英语 (`en`)
+- 繁体中文 (`zh_tw`)
+
+语言根据域名自动检测，也可在应用中手动切换。
+
+### AI报告生成
+
+报告生成使用Supabase Edge Function (`generate-scout-report`)：
+- 输入：用户档案 + 7天打卡记录
+- 输出：结构化JSON报告
+- 自动发布到社区广场
+
+### 支付集成
+
+- **国际用户**：Stripe信用卡支付
+- **国内用户**：激活码兑换系统
+
+## 📄 许可证
+
+MIT © [你的名字]
+
+---
+
+## 🤝 贡献
+
+欢迎提交Issue和Pull Request！请确保代码符合项目规范。
+
+## 🙏 致谢
+
+- [Supabase](https://supabase.com/) 提供后端即服务
+- [DeepSeek](https://www.deepseek.com/) 提供AI能力
+- [Vercel](https://vercel.com/) 提供部署平台
+- 所有贡献者和测试用户

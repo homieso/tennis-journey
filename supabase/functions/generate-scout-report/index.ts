@@ -10,7 +10,7 @@ serve(async (req) => {
     const isChineseDomain = origin.includes('tennisjourney.top')
     const isEnglishDomain = origin.includes('tj-7.vercel.app')
     // 默认根据域名决定语言，如果没有域名信息则使用中文
-    const reportLanguage = isEnglishDomain ? 'en' : 'zh'
+    let reportLanguage = isEnglishDomain ? 'en' : 'zh'
     
     const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
@@ -26,20 +26,20 @@ serve(async (req) => {
     if (profileError) {
       // 如果是测试模式，创建模拟档案
       if (test_mode) {
-        console.log('测试模式：创建模拟用户档案')
+        console.log(reportLanguage === 'en' ? 'Test mode: creating mock user profile' : '测试模式：创建模拟用户档案')
         const mockProfile = {
           id: user_id,
           email: 'test@example.com',
-          gender: '男',
+          gender: reportLanguage === 'en' ? 'Male' : '男',
           playing_years: 5,
           self_rated_ntrp: 3.5,
-          idol: '费德勒',
-          tennis_style: '全场型',
+          idol: reportLanguage === 'en' ? 'Roger Federer' : '费德勒',
+          tennis_style: reportLanguage === 'en' ? 'All-court player' : '全场型',
           age: 28,
-          location: '北京',
+          location: reportLanguage === 'en' ? 'Beijing' : '北京',
           equipment: 'Wilson Blade v9',
-          injury_history: '无',
-          short_term_goal: '提高比赛稳定性'
+          injury_history: reportLanguage === 'en' ? 'None' : '无',
+          short_term_goal: reportLanguage === 'en' ? 'Improve match stability' : '提高比赛稳定性'
         }
         // 这里我们使用模拟数据，不实际保存到数据库
       } else {
@@ -60,17 +60,19 @@ serve(async (req) => {
 
       if (logsError) throw logsError
       if (!fetchedLogs || fetchedLogs.length < 7) {
-        throw new Error('用户尚未完成7天打卡')
+        throw new Error(reportLanguage === 'en' ? 'User has not completed 7-day challenge' : '用户尚未完成7天打卡')
       }
       logs = fetchedLogs
     } else {
       // 测试模式：创建模拟打卡记录
-      console.log('测试模式：创建模拟打卡记录')
+      console.log(reportLanguage === 'en' ? 'Test mode: creating mock training logs' : '测试模式：创建模拟打卡记录')
       logs = Array.from({ length: 7 }, (_, i) => ({
         id: `test-log-${i}`,
         user_id: user_id,
         log_date: `2026-02-${String(i + 7).padStart(2, '0')}`,
-        text_content: `第${i + 1}天训练：正手练习${50 + i * 10}次，发球练习${20 + i * 5}分钟，垫步练习${3 + i}组`,
+        text_content: reportLanguage === 'en'
+          ? `Day ${i+1} training: forehand practice ${50 + i * 10} times, serve practice ${20 + i * 5} minutes, split‑step practice ${3 + i} sets`
+          : `第${i + 1}天训练：正手练习${50 + i * 10}次，发球练习${20 + i * 5}分钟，垫步练习${3 + i}组`,
         image_urls: [
           'https://finjgjjqcyjdaucyxchp.supabase.co/storage/v1/object/public/tennis-journey/examples/forehand_1.jpg',
           'https://finjgjjqcyjdaucyxchp.supabase.co/storage/v1/object/public/tennis-journey/examples/split_step_2.jpg'
@@ -395,7 +397,7 @@ ${rec.description}
     )
 
   } catch (error) {
-    console.error('生成报告失败:', error)
+    console.error(reportLanguage === 'en' ? 'Scout report generation failed:' : '生成报告失败:', error)
     return new Response(
       JSON.stringify({ success: false, error: error.message }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
