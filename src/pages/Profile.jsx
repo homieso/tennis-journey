@@ -643,7 +643,7 @@ function Profile() {
                 >
                   <div>
                     <p className="font-medium text-gray-800">
-                      {new Date(report.generated_at).toLocaleDateString('zh-CN')}
+                      {new Date(report.generated_at).toLocaleDateString()}
                     </p>
                     <p className="text-xs text-gray-500 mt-1">
                       {report.is_published ? t('profile.reports.published') : t('profile.reports.pending')}

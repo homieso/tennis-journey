@@ -202,14 +202,14 @@ function ScoutReport() {
           
           <div className="border-t border-gray-100 mt-8 pt-6 flex items-center justify-between">
             <p className="text-xs text-gray-400">
-              生成时间：{new Date(report.generated_at).toLocaleDateString('zh-CN', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-              })}
-            </p>
+                生成时间：{new Date(report.generated_at).toLocaleDateString(undefined, {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}
+              </p>
             {report?.is_published && (
               <span className="text-xs bg-wimbledon-grass/10 text-wimbledon-green px-3 py-1 rounded-full">
                 已发布为帖子

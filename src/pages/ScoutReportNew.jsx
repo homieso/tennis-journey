@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { getCurrentUser } from '../lib/auth'
+import { useTranslation } from '../lib/i18n'
 import { Swiper, SwiperSlide } from 'swiper/react'
 import { Navigation, Pagination } from 'swiper/modules'
 import { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, ResponsiveContainer } from 'recharts'
@@ -17,6 +18,7 @@ import 'swiper/css/pagination'
 
 function ScoutReportNew() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const [report, setReport] = useState(null)
   const [reportUserName, setReportUserName] = useState('')
   const [structuredData, setStructuredData] = useState(null)
@@ -79,7 +81,7 @@ function ScoutReportNew() {
       cover: {
         title: "你的7天网球之旅报告",
         subtitle: "专属AI球探报告",
-        date: new Date().toLocaleDateString('zh-CN'),
+        date: new Date().toLocaleDateString(),
         user_name: user.email.split('@')[0]
       },
       profile: {
@@ -157,13 +159,13 @@ function ScoutReportNew() {
 
   const handleShare = () => {
     // 这里可以集成分享功能
-    alert('分享功能即将上线！')
+    alert(t('scoutReport.shareFeatureComing'))
   }
 
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-wimbledon-green/5 to-wimbledon-grass/5 flex items-center justify-center">
-        <div className="text-wimbledon-green text-lg">加载报告中...</div>
+        <div className="text-wimbledon-green text-lg">{t('scoutReport.loading')}</div>
       </div>
     )
   }

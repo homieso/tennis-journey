@@ -201,6 +201,11 @@ const translations = {
     'community.repost_success': '转发成功！可以在你的个人主页查看',
     'community.default_repost_content': '转发分享',
 
+    // 球探报告
+    'scoutReport.loading': '加载报告中...',
+    'scoutReport.publishButton': '发布到社区',
+    'scoutReport.shareFeatureComing': '分享功能即将上线！',
+
     // 管理员
     'admin.only_admin_delete': '只有管理员可以删除帖子',
     'admin.delete_confirm': '确定要删除这个帖子吗？删除后无法恢复。',
@@ -210,6 +215,14 @@ const translations = {
     'admin.announcement_label': '公告',
     'admin.mark_as_announcement': '标记为公告',
     'admin.announcement_hint': '仅管理员可发布公告，公告会置顶显示',
+    'admin.edit_button': '✏️ 编辑',
+    'admin.update_post': '更新帖子',
+    'admin.edit_post': '编辑帖子',
+    'admin.updating': '更新中...',
+    'admin.edit_button': '✏️ 编辑',
+    'admin.update_post': '更新帖子',
+    'admin.edit_post': '编辑帖子',
+    'admin.updating': '更新中...',
 
     // 创建帖子
     'create_post.title': '创建帖子',
@@ -412,6 +425,9 @@ const translations = {
     'community.already_reposted': 'You have already reposted this post',
     'community.repost_success': 'Repost successful! You can view it on your profile.',
     'community.default_repost_content': 'Repost share',
+    'scoutReport.loading': 'Loading report...',
+    'scoutReport.publishButton': 'Publish to Community',
+    'scoutReport.shareFeatureComing': 'Share feature coming soon!',
     'admin.only_admin_delete': 'Only administrators can delete posts',
     'admin.delete_confirm': 'Are you sure you want to delete this post? It cannot be recovered after deletion.',
     'admin.delete_success': 'Post deleted successfully',
@@ -420,6 +436,10 @@ const translations = {
     'admin.announcement_label': 'Announcement',
     'admin.mark_as_announcement': 'Mark as announcement',
     'admin.announcement_hint': 'Only administrators can post announcements, announcements will be pinned',
+    'admin.edit_button': '✏️ Edit',
+    'admin.update_post': 'Update Post',
+    'admin.edit_post': 'Edit Post',
+    'admin.updating': 'Updating...',
     'create_post.title': 'Create Post',
     'create_post.content_placeholder': 'Share your tennis story, tips, or questions...',
     'create_post.max_images': 'Maximum {count} images',
@@ -654,6 +674,9 @@ const translations = {
     'community.already_reposted': '您已經轉發過此帖子',
     'community.repost_success': '轉發成功！可以在你的個人主頁查看',
     'community.default_repost_content': '轉發分享',
+    'scoutReport.loading': '載入報告中...',
+    'scoutReport.publishButton': '發佈到社區',
+    'scoutReport.shareFeatureComing': '分享功能即將上線！',
 
     // 管理員
     'admin.only_admin_delete': '只有管理員可以刪除帖子',
@@ -664,6 +687,10 @@ const translations = {
     'admin.announcement_label': '公告',
     'admin.mark_as_announcement': '標記為公告',
     'admin.announcement_hint': '僅管理員可發佈公告，公告會置頂顯示',
+    'admin.edit_button': '✏️ 編輯',
+    'admin.update_post': '更新帖子',
+    'admin.edit_post': '編輯帖子',
+    'admin.updating': '更新中...',
 
     'create_post.title': '創建帖子',
     'create_post.content_placeholder': '分享你的網球故事、心得或問題...',

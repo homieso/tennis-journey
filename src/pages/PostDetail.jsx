@@ -210,8 +210,8 @@ function PostDetail() {
                 )}
               </div>
               <span className="text-xs text-gray-500">
-                {new Date(comment.created_at).toLocaleDateString('zh-CN')}
-              </span>
+               {new Date(comment.created_at).toLocaleDateString()}
+             </span>
             </div>
             
             {/* 评论内容 */}

@@ -6,6 +6,8 @@ import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useTranslation } from '../lib/i18n'
 import PostCard from '../components/PostCard'
+import CreatePostModal from '../components/CreatePostModal'
+import { getCurrentUser } from '../lib/auth'
 
 function Community() {
   const { t } = useTranslation()
@@ -14,7 +16,25 @@ function Community() {
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(true)
   const [error, setError] = useState(null)
+  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [currentUser, setCurrentUser] = useState(null)
+  const [isAdmin, setIsAdmin] = useState(false)
   const PAGE_SIZE = 10
+
+  const adminUserId = 'dcee2e34-45f0-4506-9bac-4bdf0956273c'
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const { user } = await getCurrentUser()
+      setCurrentUser(user)
+      if (user && user.id === adminUserId) {
+        setIsAdmin(true)
+      } else {
+        setIsAdmin(false)
+      }
+    }
+    fetchUser()
+  }, [])
 
   useEffect(() => {
     console.log('Community useEffect triggered, page:', page)
@@ -116,13 +136,23 @@ function Community() {
       if (post.id === postId) {
         return {
           ...post,
-          repost_count: operation === 'increment' 
-            ? (post.repost_count || 0) + 1 
+          repost_count: operation === 'increment'
+            ? (post.repost_count || 0) + 1
             : Math.max(0, (post.repost_count || 0) - 1)
         }
       }
       return post
     }))
+  }
+
+  // 处理新帖子创建
+  const handlePostCreated = (newPost) => {
+    // 将新帖子添加到帖子列表顶部
+    setPosts(prev => [newPost, ...prev])
+    // 关闭模态框
+    setShowCreateModal(false)
+    // 可选：显示成功消息
+    alert('帖子发布成功！')
   }
 
   return (
@@ -134,7 +164,16 @@ function Community() {
             <h1 className="font-wimbledon text-xl font-bold text-wimbledon-green">
               {t('community.title')}
             </h1>
-            <div className="w-16"></div>
+            {/* 管理员发帖按钮 */}
+            {isAdmin && (
+              <button
+                onClick={() => setShowCreateModal(true)}
+                className="bg-wimbledon-grass hover:bg-wimbledon-green text-white px-4 py-2 rounded-xl text-sm font-medium flex items-center gap-2"
+              >
+                <span>✏️</span>
+                <span>{t('create_post.title')}</span>
+              </button>
+            )}
           </div>
           <p className="text-xs text-gray-400 mt-1">
             {t('community.subtitle')}
@@ -208,6 +247,12 @@ function Community() {
           </div>
         )}
       </div>
+      {/* 创建帖子模态框 */}
+      <CreatePostModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onPostCreated={handlePostCreated}
+      />
     </div>
   )
 }

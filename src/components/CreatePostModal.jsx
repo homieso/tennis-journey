@@ -1,7 +1,7 @@
 // src/components/CreatePostModal.jsx
 // 发帖模态框 - 支持文字内容和图片上传
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { getCurrentUser } from '../lib/auth'
 import { useTranslation } from '../lib/i18n'
@@ -15,6 +15,26 @@ function CreatePostModal({ isOpen, onClose, onPostCreated }) {
   const [previewUrls, setPreviewUrls] = useState([])
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState('')
+  const [isAnnouncement, setIsAnnouncement] = useState(false)
+  const [currentUser, setCurrentUser] = useState(null)
+  const [isAdmin, setIsAdmin] = useState(false)
+
+  const adminUserId = 'dcee2e34-45f0-4506-9bac-4bdf0956273c'
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const { user } = await getCurrentUser()
+      setCurrentUser(user)
+      if (user && user.id === adminUserId) {
+        setIsAdmin(true)
+      } else {
+        setIsAdmin(false)
+      }
+    }
+    if (isOpen) {
+      fetchUser()
+    }
+  }, [isOpen])
 
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files)
@@ -90,21 +110,26 @@ function CreatePostModal({ isOpen, onClose, onPostCreated }) {
       }
 
       // 创建帖子
+      const postData = {
+        user_id: user.id,
+        content: content.trim(),
+        media_type: images.length > 0 ? 'image' : 'none',
+        media_urls: mediaUrls.join(','),
+        like_count: 0,
+        comment_count: 0,
+        repost_count: 0,
+        view_count: 0,
+        created_at: new Date()
+      }
+
+      // 如果是管理员且勾选了公告，添加 is_announcement 字段
+      if (isAdmin && isAnnouncement) {
+        postData.is_announcement = true
+      }
+
       const { data: post, error: postError } = await supabase
         .from('posts')
-        .insert([
-          {
-            user_id: user.id,
-            content: content.trim(),
-            media_type: images.length > 0 ? 'image' : 'none',
-            media_urls: mediaUrls.join(','),
-            like_count: 0,
-            comment_count: 0,
-            repost_count: 0,
-            view_count: 0,
-            created_at: new Date()
-          }
-        ])
+        .insert([postData])
         .select()
         .single()
 
@@ -200,6 +225,26 @@ function CreatePostModal({ isOpen, onClose, onPostCreated }) {
           {error && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm">
               {error}
+            </div>
+          )}
+
+          {/* 管理员公告选项 */}
+          {isAdmin && (
+            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-xl">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={isAnnouncement}
+                  onChange={(e) => setIsAnnouncement(e.target.checked)}
+                  className="w-4 h-4 text-wimbledon-green focus:ring-wimbledon-green rounded"
+                />
+                <span className="text-sm font-medium text-blue-800">
+                  {t('admin.mark_as_announcement')}
+                </span>
+              </label>
+              <p className="text-xs text-blue-600 mt-2">
+                {t('admin.announcement_hint')}
+              </p>
             </div>
           )}
 

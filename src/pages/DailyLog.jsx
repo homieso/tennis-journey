@@ -5,11 +5,13 @@ import { useState, useRef, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { getCurrentUser } from '../lib/auth'
+import { useTranslation } from '../lib/i18n'
 
 function DailyLog() {
   const navigate = useNavigate()
   const { day } = useParams()
   const fileInputRef = useRef(null)
+  const { t } = useTranslation()
   
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -21,7 +23,7 @@ function DailyLog() {
   const [isEditing, setIsEditing] = useState(false)
   const [showExampleModal, setShowExampleModal] = useState(false)
 
-  const exampleTemplate = '分腿垫步练习3组，正手击球50次，发球练习20分钟'
+  const exampleTemplate = t('challenge.example_content')
 
   // 官方示例照片URL
   const examplePhotos = {
@@ -49,7 +51,7 @@ function DailyLog() {
       if (profileError) throw profileError
 
       if (!profile?.challenge_start_date) {
-        console.error('用户没有挑战开始日期')
+        console.error(t('error.no_challenge_start_date'))
         return
       }
 
@@ -76,7 +78,7 @@ function DailyLog() {
         setIsEditing(true)
       }
     } catch (error) {
-      console.error('检查打卡记录失败:', error)
+      console.error(t('error.check_log_failed'), error)
     }
   }
 
@@ -84,15 +86,15 @@ function DailyLog() {
     const files = Array.from(e.target.files)
     
     if (images.length + files.length > 3) {
-      setError('最多只能上传3张照片')
+      setError(t('error.max_photos'))
       return
     }
 
     const validFiles = files.filter(file => {
       const isValidType = ['image/jpeg', 'image/png', 'image/webp'].includes(file.type)
       const isValidSize = file.size <= 2 * 1024 * 1024
-      if (!isValidType) setError('只支持 JPG/PNG/WEBP 格式')
-      if (!isValidSize) setError('单张照片不能超过2MB')
+      if (!isValidType) setError(t('error.invalid_format'))
+      if (!isValidSize) setError(t('error.file_too_large'))
       return isValidType && isValidSize
     })
 
@@ -128,7 +130,7 @@ function DailyLog() {
         .from('tennis-journey')
         .remove([path])
     } catch (e) {
-      console.log('删除文件失败:', e)
+      console.log(t('error.delete_file_failed'), e)
     }
   }
 
@@ -136,11 +138,11 @@ function DailyLog() {
     e.preventDefault()
     
     if (images.length === 0 && existingImageUrls.length === 0) {
-      setError('请至少上传一张训练照片')
+      setError(t('error.required_photos'))
       return
     }
     if (!textContent.trim()) {
-      setError('请填写训练心得')
+      setError(t('error.required_content'))
       return
     }
 
@@ -149,7 +151,7 @@ function DailyLog() {
 
     try {
       const { user } = await getCurrentUser()
-      if (!user) throw new Error('请先登录')
+      if (!user) throw new Error(t('error.login_required'))
 
       // 获取用户的挑战开始日期
       const { data: profile, error: profileError } = await supabase
@@ -161,7 +163,7 @@ function DailyLog() {
       if (profileError) throw profileError
 
       if (!profile?.challenge_start_date) {
-        throw new Error('用户没有挑战开始日期')
+        throw new Error(t('error.no_challenge_start_date'))
       }
 
       // 根据挑战开始日期和第几天计算对应的日期
@@ -225,8 +227,8 @@ function DailyLog() {
       navigate('/challenge?refresh=' + Date.now(), { replace: true })
 
     } catch (err) {
-      console.error('提交失败:', err)
-      setError(err.message || '提交失败，请重试')
+      console.error(t('error.submission_failed'), err)
+      setError(err.message || t('error.submission_failed'))
     } finally {
       setLoading(false)
     }
@@ -250,7 +252,7 @@ function DailyLog() {
     }
   }
 
-  const pageTitle = isEditing ? '编辑打卡' : (isToday() ? '今日打卡' : '补打卡')
+  const pageTitle = isEditing ? t('dailylog.edit_mode') : (isToday() ? t('dailylog.today_log') : t('dailylog.makeup_log'))
 
   return (
     <div className="min-h-screen bg-wimbledon-white py-8 px-4 pb-24">
@@ -260,10 +262,10 @@ function DailyLog() {
             onClick={() => navigate('/challenge')}
             className="text-gray-600 hover:text-wimbledon-green transition-colors duration-200 px-4 py-2 rounded-full hover:bg-wimbledon-green/5"
           >
-            ← 返回挑战
+            {t('dailylog.back_to_challenge')}
           </button>
           <h1 className="font-wimbledon text-2xl font-bold text-wimbledon-green">
-            第 {day} 天 · {pageTitle}
+            {t('dailylog.title', { day, type: pageTitle })}
           </h1>
           <div className="w-16"></div>
         </div>
@@ -282,7 +284,7 @@ function DailyLog() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
                   <span className="text-wimbledon-grass mr-2">📋</span>
-                  <span className="font-medium text-gray-700">打卡示范</span>
+                  <span className="font-medium text-gray-700">{t('dailylog.example')}</span>
                 </div>
                 
                 {/* 点击区域：ⓘ + 文字 */}
@@ -292,7 +294,7 @@ function DailyLog() {
                   className="flex items-center gap-1 text-wimbledon-green hover:text-wimbledon-grass transition-all duration-200 px-3 py-1.5 rounded-full hover:bg-wimbledon-green/10 hover:shadow-sm"
                 >
                   <span className="text-lg">ⓘ</span>
-                  <span className="text-sm">点击查看</span>
+                  <span className="text-sm">{t('dailylog.example_view')}</span>
                 </button>
               </div>
             </div>
@@ -303,7 +305,7 @@ function DailyLog() {
                 <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6" onClick={(e) => e.stopPropagation()}>
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="font-wimbledon text-xl font-bold text-wimbledon-green">
-                      管理员打卡示范
+                      {t('dailylog.example_modal.title')}
                     </h3>
                     <button
                       onClick={() => setShowExampleModal(false)}
@@ -314,7 +316,7 @@ function DailyLog() {
                   </div>
                   
                   <p className="text-sm text-gray-500 mb-4">
-                    这是管理员提供的真实打卡示范。上传符合示例质量的照片和文字，有助于更快通过审核。
+                    {t('dailylog.example_modal.description')}
                   </p>
                   
                   {/* 三张大图 */}
@@ -327,7 +329,7 @@ function DailyLog() {
                           className="w-full h-full object-cover"
                         />
                       </div>
-                      <p className="text-xs text-gray-500 text-center">正手练习</p>
+                      <p className="text-xs text-gray-500 text-center">{t('dailylog.example_photo_captions.forehand')}</p>
                     </div>
                     <div className="space-y-2">
                       <div className="aspect-square bg-gray-100 rounded-xl overflow-hidden border border-gray-200">
@@ -337,7 +339,7 @@ function DailyLog() {
                           className="w-full h-full object-cover"
                         />
                       </div>
-                      <p className="text-xs text-gray-500 text-center">垫步练习</p>
+                      <p className="text-xs text-gray-500 text-center">{t('dailylog.example_photo_captions.split_step')}</p>
                     </div>
                     <div className="space-y-2">
                       <div className="aspect-square bg-gray-100 rounded-xl overflow-hidden border border-gray-200">
@@ -347,7 +349,7 @@ function DailyLog() {
                           className="w-full h-full object-cover"
                         />
                       </div>
-                      <p className="text-xs text-gray-500 text-center">发球练习</p>
+                      <p className="text-xs text-gray-500 text-center">{t('dailylog.example_photo_captions.serve')}</p>
                     </div>
                   </div>
                   
@@ -355,12 +357,12 @@ function DailyLog() {
                   <div className="bg-gray-50 rounded-xl p-4">
                     <h4 className="font-medium text-gray-800 mb-2 flex items-center">
                       <span className="text-wimbledon-grass mr-2">📝</span>
-                      训练心得
+                      {t('dailylog.content.title')}
                     </h4>
                     <div className="text-gray-700 text-sm bg-white rounded-lg p-3 border border-gray-200 space-y-2">
-                      <p>• 正手练习——右手持拍，充分侧身向前挥拍，确保击球点在身体前方。</p>
-                      <p>• 垫步练习——双腿站在边线，膝盖微弯，准备启动垫步。</p>
-                      <p>• 发球练习——右手持拍置于后背，“奖杯式”举拍，充分顶肘向前向上挥拍。</p>
+                      <p>{t('dailylog.example_bullet.forehand')}</p>
+                      <p>{t('dailylog.example_bullet.split_step')}</p>
+                      <p>{t('dailylog.example_bullet.serve')}</p>
                     </div>
                   </div>
                   
@@ -369,7 +371,7 @@ function DailyLog() {
                       onClick={() => setShowExampleModal(false)}
                       className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-2.5 rounded-full text-sm transition-all duration-200 hover:shadow-md"
                     >
-                      关闭
+                      {t('common.close')}
                     </button>
                   </div>
                 </div>
@@ -379,7 +381,7 @@ function DailyLog() {
             {/* 图片上传区域 */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                训练照片 {isEditing ? '(可编辑)' : ''}
+                {t('dailylog.photos.title', { editable: isEditing ? t('dailylog.photos.editable') : '' })}
                 <span className="text-xs text-gray-500 ml-2">
                   {images.length + existingImageUrls.length}/3
                 </span>
@@ -387,7 +389,7 @@ function DailyLog() {
               
               {existingImageUrls.length > 0 && (
                 <div className="mb-4">
-                  <p className="text-xs text-gray-500 mb-2">已上传照片：</p>
+                  <p className="text-xs text-gray-500 mb-2">{t('dailylog.photos.uploaded')}</p>
                   <div className="grid grid-cols-3 gap-4">
                     {existingImageUrls.map((url, index) => (
                       <div key={`existing-${index}`} className="relative aspect-square rounded-lg overflow-hidden border border-gray-200">
@@ -411,7 +413,7 @@ function DailyLog() {
 
               {previewUrls.length > 0 && (
                 <div className="mb-4">
-                  <p className="text-xs text-gray-500 mb-2">新上传照片：</p>
+                  <p className="text-xs text-gray-500 mb-2">{t('dailylog.photos.new')}</p>
                   <div className="grid grid-cols-3 gap-4">
                     {previewUrls.map((url, index) => (
                       <div key={index} className="relative aspect-square rounded-lg overflow-hidden border border-gray-200">
@@ -448,8 +450,8 @@ function DailyLog() {
                   />
                   <div className="text-gray-500">
                     <span className="text-3xl">📸</span>
-                    <p className="mt-2 text-sm">点击上传照片</p>
-                    <p className="text-xs text-gray-400 mt-1">支持 JPG/PNG/WEBP，单张≤2MB</p>
+                    <p className="mt-2 text-sm">{t('dailylog.photos.upload')}</p>
+                    <p className="text-xs text-gray-400 mt-1">{t('dailylog.photos.format')}</p>
                   </div>
                 </div>
               )}
@@ -457,8 +459,8 @@ function DailyLog() {
 
             <div>
               <label htmlFor="content" className="block text-sm font-medium text-gray-700 mb-2">
-                训练心得
-                {isEditing && <span className="text-xs text-gray-500 ml-2">(编辑模式)</span>}
+                {t('dailylog.content.title')}
+                {isEditing && <span className="text-xs text-gray-500 ml-2">{t('dailylog.content.edit_mode')}</span>}
               </label>
               <textarea
                 id="content"
@@ -470,7 +472,7 @@ function DailyLog() {
               />
               <div className="flex justify-between items-center mt-1">
                 <p className="text-xs text-gray-500">
-                  {isEditing ? '修改后重新提交会覆盖原有记录' : '提交后由管理员审核'}
+                  {isEditing ? t('dailylog.content.edit_note') : t('dailylog.content.review_note')}
                 </p>
                 <p className="text-xs text-gray-500">
                   {textContent.length} / 500
@@ -484,11 +486,11 @@ function DailyLog() {
                 disabled={loading}
                 className="w-full bg-wimbledon-grass hover:bg-wimbledon-green text-white font-semibold px-6 py-3.5 rounded-full transition-all duration-200 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loading ? '提交中...' : isEditing ? '更新打卡' : '提交打卡'}
+                {loading ? t('dailylog.submitting') : isEditing ? t('dailylog.update') : t('dailylog.submit')}
               </button>
               {isEditing && (
                 <p className="text-xs text-center text-wimbledon-green mt-2">
-                  ⏎ 更新后会重新进入待审核状态
+                  {t('dailylog.update_note')}
                 </p>
               )}
             </div>

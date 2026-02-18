@@ -5,10 +5,12 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { getCurrentUser, updateProfile, checkProfileExists } from '../lib/auth'
+import { useTranslation } from '../lib/i18n'
 import NTRPSlider from '../components/NTRPSlider'
 
 function Onboarding() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [user, setUser] = useState(null)

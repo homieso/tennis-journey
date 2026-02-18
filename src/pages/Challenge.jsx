@@ -157,7 +157,7 @@ function Challenge() {
 
       setDays(daysArray)
     } catch (error) {
-      console.error('获取挑战数据失败:', error)
+      console.error(t('error.fetch_challenge_failed') + ':', error)
     } finally {
       setLoading(false)
     }
@@ -190,8 +190,8 @@ function Challenge() {
       })
       if (error) throw error
     } catch (err) {
-      console.error('最终提交失败:', err)
-      alert('提交失败，请稍后重试')
+      console.error(t('error.final_submit_failed') + ':', err)
+      alert(t('error.final_submit_failed'))
     } finally {
       setSubmitting(false)
     }

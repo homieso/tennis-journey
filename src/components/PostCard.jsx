@@ -497,14 +497,24 @@ function PostCard({ post, onLikeUpdate, onCommentUpdate, onRepostUpdate, onDelet
           
           {/* 删除按钮（仅管理员可见） */}
           {isAdmin && (
-            <button
-              type="button"
-              onClick={handleDelete}
-              disabled={deleting}
-              className="text-red-400 hover:text-red-600 text-sm"
-            >
-              {deleting ? t('admin.deleting') : t('admin.delete_button')}
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={deleting}
+                className="text-red-400 hover:text-red-600 text-sm"
+              >
+                {deleting ? t('admin.deleting') : t('admin.delete_button')}
+              </button>
+              {/* 编辑按钮（仅管理员可见） */}
+              <button
+                type="button"
+                onClick={() => alert(t('admin.edit_post') + ' 功能即将上线')}
+                className="text-blue-400 hover:text-blue-600 text-sm ml-4"
+              >
+                {t('admin.edit_button')}
+              </button>
+            </>
           )}
         </div>
         
