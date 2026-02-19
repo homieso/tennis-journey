@@ -28,6 +28,15 @@ function Challenge() {
   const [challengeStatus, setChallengeStatus] = useState('') // in_progress | awaiting_report | success
   const [submitting, setSubmitting] = useState(false)
 
+  // 将 startDate 转换为中国时区显示
+  const formatDate = (dateStr) => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    // 转换为中国时区 (UTC+8)
+    const chinaTime = new Date(date.getTime() + 8 * 60 * 60 * 1000);
+    return chinaTime.toISOString().split('T')[0];
+  };
+
   useEffect(() => {
     fetchChallengeData()
   }, [])
@@ -242,7 +251,7 @@ function Challenge() {
             {t('challenge.title')}
           </h2>
           <p className="text-gray-600">
-            {startDate ? t('challenge.started_on', { date: startDate }) : t('challenge.description')}
+            {startDate ? `${t('challenge.started_on')}: ${formatDate(startDate)} (UTC+8)` : t('challenge.description')}
           </p>
         </div>
 
