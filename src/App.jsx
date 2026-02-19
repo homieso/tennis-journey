@@ -111,14 +111,12 @@ function Home() {
   }, [])
 
   const checkProfileStatus = async () => {
+    console.log('checkProfileStatus running...')
     const { user } = await getCurrentUser()
     
     if (!user) {
-      // 未登录用户：只显示公开内容，不跳转
-      setUser(null)
-      setHasProfile(false)
-      setProfile(null)
-      setLoading(false)
+      console.log('No user found, redirecting to login')
+      navigate('/login')
       return
     }
 
@@ -128,6 +126,9 @@ function Home() {
     try {
       // 检查档案是否存在并获取档案数据
       const { exists } = await checkProfileExists(user.id)
+      console.log('Profile exists?', exists)
+      console.log('Current path:', window.location.pathname)
+      
       setHasProfile(exists)
       
       // 获取用户的完整档案数据用于显示用户名
@@ -148,11 +149,18 @@ function Home() {
         // 如果档案不存在，强制停留在 onboarding
         // 如果当前不在 onboarding 页面，才跳转
         if (window.location.pathname !== '/onboarding') {
+          console.log('Redirecting to onboarding...')
           navigate('/onboarding')
+        } else {
+          console.log('Already on onboarding page, staying put.')
         }
+        return
       }
+      
+      // 档案存在，正常跳转
+      setHasProfile(true)
     } catch (error) {
-      console.error('获取档案数据失败:', error)
+      console.error('检查档案状态失败:', error)
       setProfile(null)
     } finally {
       setLoading(false)
@@ -202,7 +210,7 @@ function Home() {
         const announcements = [
           {
             user_id: adminUserId,
-            content: '欢迎来到 Tennis Journey！完成7天挑战，解锁你的专属AI球探报告。',
+            content: t('app.announcement1', '欢迎来到 Tennis Journey！完成7天挑战，解锁你的专属AI球探报告。'),
             like_count: 0,
             comment_count: 0,
             repost_count: 0,
@@ -211,7 +219,7 @@ function Home() {
           },
           {
             user_id: adminUserId,
-            content: '社区交流规范：友善互动，分享网球心得，禁止广告与不当言论。',
+            content: t('app.announcement2', '社区交流规范：友善互动，分享网球心得，禁止广告与不当言论。'),
             like_count: 0,
             comment_count: 0,
             repost_count: 0,
@@ -220,7 +228,7 @@ function Home() {
           },
           {
             user_id: adminUserId,
-            content: '产品愿景：帮助每一位网球爱好者记录成长，连接全球球友。',
+            content: t('app.announcement3', '产品愿景：帮助每一位网球爱好者记录成长，连接全球球友。'),
             like_count: 0,
             comment_count: 0,
             repost_count: 0,
@@ -272,24 +280,24 @@ function Home() {
         setCommunityPosts([
           {
             id: 'announcement-1',
-            title: '欢迎来到 Tennis Journey！完成7天挑战，解锁你的专属AI球探报告。',
-            author: '管理员',
+            title: t('app.announcement1', '欢迎来到 Tennis Journey！完成7天挑战，解锁你的专属AI球探报告。'),
+            author: t('app.admin', '管理员'),
             date: new Date().toISOString().split('T')[0],
             likes: 0,
             comments: 0
           },
           {
             id: 'announcement-2',
-            title: '社区交流规范：友善互动，分享网球心得，禁止广告与不当言论。',
-            author: '管理员',
+            title: t('app.announcement2', '社区交流规范：友善互动，分享网球心得，禁止广告与不当言论。'),
+            author: t('app.admin', '管理员'),
             date: new Date().toISOString().split('T')[0],
             likes: 0,
             comments: 0
           },
           {
             id: 'announcement-3',
-            title: '产品愿景：帮助每一位网球爱好者记录成长，连接全球球友。',
-            author: '管理员',
+            title: t('app.announcement3', '产品愿景：帮助每一位网球爱好者记录成长，连接全球球友。'),
+            author: t('app.admin', '管理员'),
             date: new Date().toISOString().split('T')[0],
             likes: 0,
             comments: 0
@@ -303,7 +311,7 @@ function Home() {
         // 如果没有内容，使用默认标题
         const title = post.content
           ? (post.content.length > 30 ? post.content.substring(0, 30) + '...' : post.content)
-          : `社区帖子 ${index + 1}`
+          : t('app.community_post_default', '社区帖子 {index}', { index: index + 1 })
         
         const date = new Date(post.created_at)
         const formattedDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
@@ -320,7 +328,7 @@ function Home() {
         return {
           id: post.id,
           title: title,
-          author: post.profiles?.username || '管理员',
+          author: post.profiles?.username || t('app.admin', '管理员'),
           date: formattedDate,
           likes: post.like_count || 0,
           comments: post.comment_count || 0,
@@ -333,24 +341,24 @@ function Home() {
         const announcementPosts = [
           {
             id: 'announcement-1',
-            title: '欢迎来到 Tennis Journey！完成7天挑战，解锁你的专属AI球探报告。',
-            author: '管理员',
+            title: t('app.announcement1', '欢迎来到 Tennis Journey！完成7天挑战，解锁你的专属AI球探报告。'),
+            author: t('app.admin', '管理员'),
             date: new Date().toISOString().split('T')[0],
             likes: 0,
             comments: 0
           },
           {
             id: 'announcement-2',
-            title: '社区交流规范：友善互动，分享网球心得，禁止广告与不当言论。',
-            author: '管理员',
+            title: t('app.announcement2', '社区交流规范：友善互动，分享网球心得，禁止广告与不当言论。'),
+            author: t('app.admin', '管理员'),
             date: new Date().toISOString().split('T')[0],
             likes: 0,
             comments: 0
           },
           {
             id: 'announcement-3',
-            title: '产品愿景：帮助每一位网球爱好者记录成长，连接全球球友。',
-            author: '管理员',
+            title: t('app.announcement3', '产品愿景：帮助每一位网球爱好者记录成长，连接全球球友。'),
+            author: t('app.admin', '管理员'),
             date: new Date().toISOString().split('T')[0],
             likes: 0,
             comments: 0
@@ -370,24 +378,24 @@ function Home() {
       setCommunityPosts([
         {
           id: 'announcement-1',
-          title: '欢迎来到 Tennis Journey！完成7天挑战，解锁你的专属AI球探报告。',
-          author: '管理员',
+          title: t('app.announcement1', '欢迎来到 Tennis Journey！完成7天挑战，解锁你的专属AI球探报告。'),
+          author: t('app.admin', '管理员'),
           date: new Date().toISOString().split('T')[0],
           likes: 0,
           comments: 0
         },
         {
           id: 'announcement-2',
-          title: '社区交流规范：友善互动，分享网球心得，禁止广告与不当言论。',
-          author: '管理员',
+          title: t('app.announcement2', '社区交流规范：友善互动，分享网球心得，禁止广告与不当言论。'),
+          author: t('app.admin', '管理员'),
           date: new Date().toISOString().split('T')[0],
           likes: 0,
           comments: 0
         },
         {
           id: 'announcement-3',
-          title: '产品愿景：帮助每一位网球爱好者记录成长，连接全球球友。',
-          author: '管理员',
+          title: t('app.announcement3', '产品愿景：帮助每一位网球爱好者记录成长，连接全球球友。'),
+          author: t('app.admin', '管理员'),
           date: new Date().toISOString().split('T')[0],
           likes: 0,
           comments: 0
@@ -396,7 +404,7 @@ function Home() {
     }
   }
 
-  const handleComingSoon = (message = '此功能正在开发中，敬请期待！') => {
+  const handleComingSoon = (message = t('app.coming_soon', '此功能正在开发中，敬请期待！')) => {
     setComingSoonMessage(message)
     setShowComingSoon(true)
   }
