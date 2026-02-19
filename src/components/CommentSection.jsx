@@ -2,6 +2,7 @@
 // 评论区组件 - 参考微博评论区设计
 
 import { useState, useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { getCurrentUser } from '../lib/auth'
 import { useTranslation } from '../lib/i18n'
@@ -11,6 +12,7 @@ import Lightbox from 'yet-another-react-lightbox'
 import 'yet-another-react-lightbox/styles.css'
 
 function CommentSection({ postId, postAuthorId }) {
+  const navigate = useNavigate()
   const { t } = useTranslation()
   const [comments, setComments] = useState([])
   const [loading, setLoading] = useState(true)
@@ -632,7 +634,7 @@ function CommentSection({ postId, postAuthorId }) {
           {t('postDetail.approval_required', '完成7天网球挑战后，您的账户将自动获得评论权限')}
         </p>
         <button
-          onClick={() => window.location.href = '/daily-log'}
+          onClick={() => navigate('/challenge')}
           className="px-4 py-2 bg-wimbledon-green text-white rounded-lg hover:bg-wimbledon-grass"
         >
           {t('postDetail.start_challenge')}
