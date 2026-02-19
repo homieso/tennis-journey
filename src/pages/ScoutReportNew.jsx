@@ -731,16 +731,16 @@ function ScoutReportNew() {
             <div className="h-full bg-gradient-to-br from-purple-50 to-pink-100 rounded-3xl shadow-xl p-8 flex flex-col justify-center items-center">
               <div className="text-center mb-8">
                 <div className="text-6xl mb-4">🎉</div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">报告完成</h2>
-                <p className="text-gray-600">你的7天网球之旅总结</p>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">{t('scoutReport.completion_title')}</h2>
+                <p className="text-gray-600">{t('scoutReport.completion_subtitle')}</p>
               </div>
               
               <div className="text-center mb-8">
                 <p className="text-gray-700 mb-4">
-                  恭喜你完成了7天网球挑战！这份报告记录了你的成长轨迹。
+                  {t('scoutReport.completion_message')}
                 </p>
                 <p className="text-sm text-gray-500">
-                  继续坚持训练，期待你的下一次进步！
+                  {t('scoutReport.completion_hint')}
                 </p>
               </div>
               

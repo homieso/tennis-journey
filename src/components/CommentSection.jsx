@@ -171,6 +171,9 @@ function CommentSection({ postId, postAuthorId }) {
         parent_id: replyingTo?.id || null
       }
 
+      console.log('发布评论数据:', commentData)
+      console.log('上传的图片URLs:', uploadedImageUrls)
+
       const { data: comment, error } = await supabase
         .from('comments')
         .insert([commentData])
@@ -188,18 +191,29 @@ function CommentSection({ postId, postAuthorId }) {
         `)
         .single()
 
-      if (error) throw error
+      if (error) {
+        console.error('评论插入错误:', error)
+        throw error
+      }
+
+      console.log('评论创建成功:', comment)
 
       // 2. 如果勾选了同时转发，创建转发记录
       if (simultaneousRepost && !replyingTo) {
-        await supabase
-          .from('reposts')
-          .insert([{
-            user_id: currentUser.id,
-            post_id: postId,
-            original_post_id: postId,
-            comment: commentContent
-          }])
+        try {
+          await supabase
+            .from('reposts')
+            .insert([{
+              user_id: currentUser.id,
+              post_id: postId,
+              original_post_id: postId,
+              comment: commentContent
+            }])
+          console.log('转发记录创建成功')
+        } catch (repostError) {
+          console.error('创建转发记录失败:', repostError)
+          // 不阻止评论发布，只记录错误
+        }
       }
 
       // 3. 更新评论列表
@@ -223,6 +237,7 @@ function CommentSection({ postId, postAuthorId }) {
       setCommentContent('')
       setReplyingTo(null)
       setUploadedImages([])
+      setUploadedImageUrls([]) // 清空图片URL
       setSimultaneousRepost(false)
       setShowReplyInput({})
 
