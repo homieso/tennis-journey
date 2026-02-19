@@ -991,6 +991,7 @@ const translations = {
     'feedback.emergency_help': 'For urgent help, please contact support email: support@tennisjourney.top',
     'feedback.improve_experience': 'Your feedback will help us continuously improve product experience',
     'ntrp.self_rating': 'Self‑rated level: NTRP {value}',
+    'ntrp.slider_description': 'Drag the slider to select your skill level (1.0 Beginner - 5.0 Professional)',
     'shareReport.motivation': 'Share your 7‑day tennis challenge achievements, inspire more tennis enthusiasts!',
     'scoutReportNew.stats_title': 'Log Data',
     'scoutReportNew.stats_subtitle': '7‑day training results statistics',

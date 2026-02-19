@@ -1,7 +1,9 @@
 // src/components/NTRPSlider.jsx
 // NTRP自评等级滑块组件（1.0 - 5.0，支持0.5步进）
+import { useTranslation } from '../lib/i18n'
 
 function NTRPSlider({ value, onChange }) {
+  const { t } = useTranslation()
   // NTRP等级列表
   const levels = [1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0]
   
@@ -48,7 +50,7 @@ function NTRPSlider({ value, onChange }) {
       </div>
       
       <p className="text-xs text-gray-500 text-center">
-        拖动滑块选择你的技术水平（1.0初学者 - 5.0专业级）
+        {t('ntrp.slider_description')}
       </p>
     </div>
   )
