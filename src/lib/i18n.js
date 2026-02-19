@@ -288,6 +288,9 @@ const translations = {
     'scoutReport.view_post': '查看帖子',
     'scoutReport.generated_time': '生成时间：',
     'scoutReport.reward_note': '你的专属球探报告已生成，发布后可获得30天免费会员资格。',
+    'scoutReport.publish_content_zh': '我的挑战成功了！快看我的专属球探报告！',
+    'scoutReport.publish_content_en': 'I completed the challenge! Check out my exclusive scout report!',
+    'scoutReport.publish_content_zh_tw': '我的挑戰成功了！快看我的專屬球探報告！',
 
     // 管理员
     'admin.only_admin_delete': '只有管理员可以删除帖子',

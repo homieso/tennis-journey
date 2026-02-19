@@ -1,11 +1,14 @@
 // src/components/CommentSection.jsx
 // 评论区组件 - 参考微博评论区设计
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { getCurrentUser } from '../lib/auth'
 import { useTranslation } from '../lib/i18n'
 import toast from 'react-hot-toast'
+import EmojiPicker from 'emoji-picker-react'
+import Lightbox from 'react-image-lightbox'
+import 'react-image-lightbox/style.css'
 
 function CommentSection({ postId, postAuthorId }) {
   const { t } = useTranslation()
@@ -16,14 +19,29 @@ function CommentSection({ postId, postAuthorId }) {
   const [replyingTo, setReplyingTo] = useState(null)
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
   const [uploadedImages, setUploadedImages] = useState([])
+  const [uploadedImageUrls, setUploadedImageUrls] = useState([])
   const [simultaneousRepost, setSimultaneousRepost] = useState(false)
   const [posting, setPosting] = useState(false)
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(true)
   const [showReplyInput, setShowReplyInput] = useState({})
+  const [lightboxOpen, setLightboxOpen] = useState(false)
+  const [lightboxIndex, setLightboxIndex] = useState(0)
+  const emojiPickerRef = useRef(null)
 
   // 每页加载的评论数
   const COMMENTS_PER_PAGE = 10
+
+  // 点击外部关闭emoji选择器
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target)) {
+        setShowEmojiPicker(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   // 获取当前用户
   useEffect(() => {
@@ -326,6 +344,60 @@ function CommentSection({ postId, postAuthorId }) {
     loadComments(page + 1, true)
   }
 
+  // 处理emoji选择
+  const handleEmojiClick = (emojiData) => {
+    setCommentContent(prev => prev + emojiData.emoji)
+    setShowEmojiPicker(false)
+  }
+
+  // 上传图片到Supabase Storage
+  const uploadImages = async (files) => {
+    const urls = []
+    for (const file of files) {
+      try {
+        const fileName = `comments/${postId}/${currentUser.id}/${Date.now()}_${file.name}`
+        const { error } = await supabase.storage
+          .from('tennis-journey')
+          .upload(fileName, file)
+        
+        if (error) throw error
+        
+        const { data: { publicUrl } } = supabase.storage
+          .from('tennis-journey')
+          .getPublicUrl(fileName)
+        
+        urls.push(publicUrl)
+      } catch (error) {
+        console.error('图片上传失败:', error)
+        toast.error('图片上传失败')
+      }
+    }
+    return urls
+  }
+
+  // 处理图片上传
+  const handleImageUpload = async (e) => {
+    const files = Array.from(e.target.files)
+    if (files.length > 3) {
+      toast.error('最多只能上传3张图片')
+      return
+    }
+    
+    setUploadedImages(files)
+    const urls = await uploadImages(files)
+    setUploadedImageUrls(urls)
+    
+    // 将图片URL添加到评论内容中
+    const imageText = urls.map(url => `\n![图片](${url})`).join('')
+    setCommentContent(prev => prev + imageText)
+  }
+
+  // 打开图片预览
+  const openLightbox = (index) => {
+    setLightboxIndex(index)
+    setLightboxOpen(true)
+  }
+
   // 渲染单个评论
   const renderComment = (comment, isReply = false) => {
     const isAuthor = comment.user_id === postAuthorId
@@ -534,7 +606,7 @@ function CommentSection({ postId, postAuthorId }) {
           </div>
 
           {/* 输入区域 */}
-          <div className="flex-1">
+          <div className="flex-1 relative">
             <textarea
               value={commentContent}
               onChange={(e) => setCommentContent(e.target.value)}
@@ -547,6 +619,47 @@ function CommentSection({ postId, postAuthorId }) {
                 }
               }}
             />
+            
+            {/* Emoji选择器 */}
+            {showEmojiPicker && (
+              <div ref={emojiPickerRef} className="absolute z-10 mt-2">
+                <EmojiPicker
+                  onEmojiClick={handleEmojiClick}
+                  width={300}
+                  height={400}
+                  previewConfig={{ showPreview: false }}
+                  searchDisabled={false}
+                  skinTonesDisabled={true}
+                />
+              </div>
+            )}
+            
+            {/* 已上传图片预览 */}
+            {uploadedImageUrls.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-2">
+                {uploadedImageUrls.map((url, index) => (
+                  <div key={index} className="relative">
+                    <img
+                      src={url}
+                      alt={`上传的图片 ${index + 1}`}
+                      className="w-16 h-16 object-cover rounded-lg cursor-pointer"
+                      onClick={() => openLightbox(index)}
+                    />
+                    <button
+                      onClick={() => {
+                        const newUrls = [...uploadedImageUrls]
+                        newUrls.splice(index, 1)
+                        setUploadedImageUrls(newUrls)
+                      }}
+                      className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            
             <div className="flex justify-between items-center mt-3">
               <div className="flex items-center space-x-3">
                 <button
@@ -569,14 +682,7 @@ function CommentSection({ postId, postAuthorId }) {
                   accept="image/*"
                   multiple
                   className="hidden"
-                  onChange={(e) => {
-                    const files = Array.from(e.target.files)
-                    if (files.length > 3) {
-                      toast.error('最多只能上传3张图片')
-                      return
-                    }
-                    setUploadedImages(files)
-                  }}
+                  onChange={handleImageUpload}
                 />
                 <label className="flex items-center space-x-1 text-sm text-gray-500">
                   <input
@@ -628,6 +734,22 @@ function CommentSection({ postId, postAuthorId }) {
           </div>
         )}
       </div>
+      
+      {/* 图片预览Lightbox */}
+      {lightboxOpen && uploadedImageUrls.length > 0 && (
+        <Lightbox
+          mainSrc={uploadedImageUrls[lightboxIndex]}
+          nextSrc={uploadedImageUrls[(lightboxIndex + 1) % uploadedImageUrls.length]}
+          prevSrc={uploadedImageUrls[(lightboxIndex + uploadedImageUrls.length - 1) % uploadedImageUrls.length]}
+          onCloseRequest={() => setLightboxOpen(false)}
+          onMovePrevRequest={() =>
+            setLightboxIndex((lightboxIndex + uploadedImageUrls.length - 1) % uploadedImageUrls.length)
+          }
+          onMoveNextRequest={() =>
+            setLightboxIndex((lightboxIndex + 1) % uploadedImageUrls.length)
+          }
+        />
+      )}
     </div>
   )
 }

@@ -201,9 +201,9 @@ function ScoutReportNew() {
         .insert([{
           user_id: user.id,
           report_id: report.id,
-          content_zh: '我的挑战成功了！快看我的专属球探报告！',
-          content_en: 'I completed the challenge! Check out my exclusive scout report!',
-          content_zh_tw: '我的挑戰成功了！快看我的專屬球探報告！',
+          content_zh: t('scoutReport.publish_content_zh'),
+          content_en: t('scoutReport.publish_content_en'),
+          content_zh_tw: t('scoutReport.publish_content_zh_tw'),
           media_urls: [uploadedUrl],
           is_published: true,
           published_at: new Date().toISOString()
@@ -213,6 +213,14 @@ function ScoutReportNew() {
       
       if (error) {
         console.error('创建帖子失败:', error)
+        
+        // 检查是否是RLS错误
+        if (error.message.includes('row-level security policy') || error.message.includes('RLS')) {
+          // 尝试使用服务角色密钥重新执行
+          console.log('检测到RLS错误，尝试使用服务角色密钥...')
+          throw new Error('发布失败：数据库权限问题。请确保posts表有正确的RLS策略。')
+        }
+        
         throw new Error(`发布失败: ${error.message}`)
       }
       
