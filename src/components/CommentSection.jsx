@@ -7,8 +7,8 @@ import { getCurrentUser } from '../lib/auth'
 import { useTranslation } from '../lib/i18n'
 import toast from 'react-hot-toast'
 import EmojiPicker from 'emoji-picker-react'
-import Lightbox from 'react-image-lightbox'
-import 'react-image-lightbox/style.css'
+import Lightbox from 'yet-another-react-lightbox'
+import 'yet-another-react-lightbox/styles.css'
 
 function CommentSection({ postId, postAuthorId }) {
   const { t } = useTranslation()
@@ -738,16 +738,11 @@ function CommentSection({ postId, postAuthorId }) {
       {/* 图片预览Lightbox */}
       {lightboxOpen && uploadedImageUrls.length > 0 && (
         <Lightbox
-          mainSrc={uploadedImageUrls[lightboxIndex]}
-          nextSrc={uploadedImageUrls[(lightboxIndex + 1) % uploadedImageUrls.length]}
-          prevSrc={uploadedImageUrls[(lightboxIndex + uploadedImageUrls.length - 1) % uploadedImageUrls.length]}
-          onCloseRequest={() => setLightboxOpen(false)}
-          onMovePrevRequest={() =>
-            setLightboxIndex((lightboxIndex + uploadedImageUrls.length - 1) % uploadedImageUrls.length)
-          }
-          onMoveNextRequest={() =>
-            setLightboxIndex((lightboxIndex + 1) % uploadedImageUrls.length)
-          }
+          open={lightboxOpen}
+          close={() => setLightboxOpen(false)}
+          slides={uploadedImageUrls.map(url => ({ src: url }))}
+          index={lightboxIndex}
+          on={{ view: ({ index }) => setLightboxIndex(index) }}
         />
       )}
     </div>
