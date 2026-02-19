@@ -9,7 +9,7 @@ export const SUPPORTED_LANGUAGES = {
 }
 
 // 默认语言
-export const DEFAULT_LANGUAGE = 'zh'
+export const DEFAULT_LANGUAGE = 'en'
 
 // 翻译字典
 const translations = {
@@ -389,6 +389,21 @@ const translations = {
     'error.report_not_found': '球探报告不存在',
     'error.load_failed': '加载失败',
     'error.retry': '重试',
+    'error.password_mismatch': '两次输入的密码不一致',
+    'error.password_too_short': '密码至少需要6个字符',
+    
+    // 注册页面
+    'register.create_account': '创建你的账户',
+    'register.email_label': '邮箱地址',
+    'register.email_placeholder': 'your@email.com',
+    'register.password_label': '密码',
+    'register.password_placeholder': '至少6个字符',
+    'register.confirm_password_label': '确认密码',
+    'register.confirm_password_placeholder': '再次输入密码',
+    'register.registering': '注册中...',
+    'register.register_button': '注册',
+    'register.have_account': '已有账户？',
+    'register.login_now': '立即登录',
     
     // 账户注销
     'account.deletion.title': '注销账户',
@@ -456,6 +471,14 @@ const translations = {
     'onboarding.optional_hint': '填写更多信息，让AI生成更精准的球探报告',
     'onboarding.required_note': '标记 * 的项目为必填，选填信息可随时在个人主页补充',
     'onboarding.later_challenge': '稍后填写，先去挑战',
+    
+    // App.jsx 新增翻译
+    'app.announcement1': '欢迎来到 Tennis Journey！完成7天挑战，解锁你的专属AI球探报告。',
+    'app.announcement2': '社区交流规范：友善互动，分享网球心得，禁止广告与不当言论。',
+    'app.announcement3': '产品愿景：帮助每一位网球爱好者记录成长，连接全球球友。',
+    'app.admin': '管理员',
+    'app.coming_soon': '此功能正在开发中，敬请期待！',
+    'app.community_post_default': '社区帖子 {index}',
   },
   
   en: {
@@ -733,6 +756,21 @@ const translations = {
     'error.report_not_found': 'Scout report not found',
     'error.load_failed': 'Load failed',
     'error.retry': 'Retry',
+    'error.password_mismatch': 'Passwords do not match',
+    'error.password_too_short': 'Password must be at least 6 characters',
+    
+    // Register page
+    'register.create_account': 'Create your account',
+    'register.email_label': 'Email address',
+    'register.email_placeholder': 'your@email.com',
+    'register.password_label': 'Password',
+    'register.password_placeholder': 'At least 6 characters',
+    'register.confirm_password_label': 'Confirm password',
+    'register.confirm_password_placeholder': 'Enter password again',
+    'register.registering': 'Registering...',
+    'register.register_button': 'Register',
+    'register.have_account': 'Already have an account?',
+    'register.login_now': 'Login now',
 
     // Account deletion
     'account.deletion.title': 'Delete Account',
@@ -892,6 +930,7 @@ const translations = {
     'postCard.repost': 'Repost',
     'postCard.readMore': 'Read more',
     'postCard.collapse': 'Collapse',
+    'postCard.need_approval': 'This feature requires you to complete the 7-day challenge and get approved. Start your journey now!',
 
     // Challenge page
     'challenge.title': '7-Day Challenge',
@@ -978,6 +1017,19 @@ const translations = {
     'onboarding.optional_hint': 'Fill in more information to let AI generate more accurate scout report',
     'onboarding.required_note': 'Items marked * are required, optional information can be supplemented anytime in profile',
     'onboarding.later_challenge': 'Fill later, go to challenge',
+    
+    // App.jsx 新增翻译 - 英文
+    'app.announcement1': 'Welcome to Tennis Journey! Complete the 7-day challenge to unlock your exclusive AI scout report.',
+    'app.announcement2': 'Community guidelines: Friendly interaction, sharing tennis insights, no ads or inappropriate content.',
+    'app.announcement3': 'Product vision: Help every tennis enthusiast record growth and connect with global players.',
+    'app.admin': 'Admin',
+    'app.coming_soon': 'This feature is under development, stay tuned!',
+    'app.community_post_default': 'Community post {index}',
+    
+    // 新增翻译键 - 权限相关
+    'error.permission_denied': 'You don\'t have permission to perform this action',
+    'postDetail.approval_required': 'You need to complete the 7-day challenge to comment',
+    'postDetail.start_challenge': 'Start Challenge',
   },
   
   zh_tw: {
@@ -1259,39 +1311,36 @@ const translations = {
     'error.final_submit_failed': '提交失敗，請稍後重試',
     'error.fetch_profile_failed': '獲取個人資料失敗',
     'error.fetch_social_data_failed': '獲取社交數據失敗',
+    'error.password_mismatch': '兩次輸入的密碼不一致',
+    'error.password_too_short': '密碼至少需要6個字符',
+    
+    // 註冊頁面
+    'register.create_account': '創建你的賬戶',
+    'register.email_label': '郵箱地址',
+    'register.email_placeholder': 'your@email.com',
+    'register.password_label': '密碼',
+    'register.password_placeholder': '至少6個字符',
+    'register.confirm_password_label': '確認密碼',
+    'register.confirm_password_placeholder': '再次輸入密碼',
+    'register.registering': '註冊中...',
+    'register.register_button': '註冊',
+    'register.have_account': '已有賬戶？',
+    'register.login_now': '立即登入',
+    
+    // App.jsx 新增翻译 - 繁体中文
+    'app.announcement1': '歡迎來到 Tennis Journey！完成7天挑戰，解鎖你的專屬AI球探報告。',
+    'app.announcement2': '社群交流規範：友善互動，分享網球心得，禁止廣告與不當言論。',
+    'app.announcement3': '產品願景：幫助每一位網球愛好者記錄成長，連接全球球友。',
+    'app.admin': '管理員',
+    'app.coming_soon': '此功能正在開發中，敬請期待！',
+    'app.community_post_default': '社群帖子 {index}',
   }
 }
 
 // 获取当前语言
 export function getCurrentLanguage() {
-  const savedLang = localStorage.getItem('preferred_language')
-  if (savedLang && SUPPORTED_LANGUAGES[savedLang]) {
-    return savedLang
-  }
-  
-  // 检测域名，自动设置默认语言
-  // 注意：域名检测的优先级低于用户手动保存的语言，但高于浏览器语言
-  const hostname = window.location.hostname
-  if (hostname.includes('tennisjourney.top')) {
-    // 国内域名默认简体中文
-    return 'zh'
-  } else if (hostname.includes('tj-7.vercel.app')) {
-    // 国际域名默认英语
-    return 'en'
-  }
-  
-  // 检测浏览器语言
-  const browserLang = navigator.language.toLowerCase()
-  if (browserLang.startsWith('zh')) {
-    if (browserLang.includes('tw') || browserLang.includes('hant')) {
-      return 'zh_tw'
-    }
-    return 'zh'
-  } else if (browserLang.startsWith('en')) {
-    return 'en'
-  }
-  
-  return DEFAULT_LANGUAGE
+  // 不再检测浏览器语言，直接返回英文
+  return 'en';
 }
 
 // 设置语言
