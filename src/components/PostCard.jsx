@@ -23,6 +23,10 @@ function PostCard({ post, onLikeUpdate, onCommentUpdate, onRepostUpdate, onDelet
   const [imageUrls, setImageUrls] = useState([])
   const [showImageLightbox, setShowImageLightbox] = useState(false)
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
+  
+  // 转发弹窗状态
+  const [showRepostModal, setShowRepostModal] = useState(false)
+  const [repostComment, setRepostComment] = useState('')
 
   // 管理员ID
   const adminUserId = 'dcee2e34-45f0-4506-9bac-4bdf0956273c'
@@ -157,8 +161,8 @@ function PostCard({ post, onLikeUpdate, onCommentUpdate, onRepostUpdate, onDelet
     }
   }
   
-  // 处理转发（创建新帖子）
-  const handleRepost = async () => {
+  // 打开转发弹窗
+  const handleRepost = () => {
     if (!currentUser) {
       navigate('/login')
       return
@@ -169,7 +173,18 @@ function PostCard({ post, onLikeUpdate, onCommentUpdate, onRepostUpdate, onDelet
       return
     }
     
-    const comment = window.prompt(t('community.repost_prompt', { default: '添加转发评论（可选）' }))
+    setShowRepostModal(true)
+  }
+  
+  // 取消转发
+  const handleCancelRepost = () => {
+    setShowRepostModal(false)
+    setRepostComment('')
+  }
+  
+  // 确认转发
+  const handleConfirmRepost = async () => {
+    setShowRepostModal(false)
     
     setLoading(true)
     try {
@@ -179,7 +194,7 @@ function PostCard({ post, onLikeUpdate, onCommentUpdate, onRepostUpdate, onDelet
         .insert([
           {
             user_id: currentUser.id,
-            content: comment || t('community.default_repost_content'),
+            content: repostComment || t('community.default_repost_content'),
             original_post_id: post.id,
             like_count: 0,
             comment_count: 0,
@@ -202,7 +217,7 @@ function PostCard({ post, onLikeUpdate, onCommentUpdate, onRepostUpdate, onDelet
             user_id: currentUser.id,
             post_id: newPost.id,
             original_post_id: post.id,
-            comment: comment || null
+            comment: repostComment || null
           }
         ])
       
@@ -218,13 +233,14 @@ function PostCard({ post, onLikeUpdate, onCommentUpdate, onRepostUpdate, onDelet
       
       setReposted(true)
       onRepostUpdate?.(post.id, 'increment')
-      alert(t('community.repost_success'))
+      alert(t('postCard.repost_success', t('community.repost_success')))
       
     } catch (error) {
       console.error('转发失败:', error)
       alert('转发失败，请重试')
     } finally {
       setLoading(false)
+      setRepostComment('')
     }
   }
   

@@ -7,6 +7,7 @@ import { supabase } from '../lib/supabase'
 import { getCurrentUser } from '../lib/auth'
 import { useTranslation } from '../lib/i18n'
 import PostCard from '../components/PostCard'
+import CommentSection from '../components/CommentSection'
 
 function PostDetail() {
   const { id } = useParams()
