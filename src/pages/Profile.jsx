@@ -23,6 +23,7 @@ function Profile() {
   const [userPosts, setUserPosts] = useState([])
   const [userReposts, setUserReposts] = useState([])
   const [userLikes, setUserLikes] = useState([])
+  const [userComments, setUserComments] = useState([])
   const [socialStats, setSocialStats] = useState({
     totalLikesReceived: 0,
     totalPosts: 0,
@@ -163,19 +164,39 @@ function Profile() {
       if (likesError) throw likesError
       setUserLikes(likesData?.map(like => like.posts) || [])
 
+      // 获取用户评论
+      const { data: commentsData, error: commentsError } = await supabase
+        .from('comments')
+        .select(`
+          *,
+          posts!inner (
+            id,
+            content,
+            user_id,
+            profiles!inner (
+              username,
+              avatar_url
+            )
+          ),
+          profiles!inner (
+            id,
+            username,
+            avatar_url
+          )
+        `)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(20)
+
+      if (commentsError) throw commentsError
+      setUserComments(commentsData || [])
+
       // 计算社交统计
       const totalLikesReceived = (postsData || []).reduce((sum, post) => sum + (post.like_count || 0), 0)
       const totalPosts = (postsData || []).length
       const totalReposts = (repostsData || []).length
       const totalLikesGiven = likesData?.length || 0
-      
-      // 获取用户评论数量
-      const { count: commentCount, error: commentError } = await supabase
-        .from('comments')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', user.id)
-      
-      const totalCommentsGiven = commentError ? 0 : (commentCount || 0)
+      const totalCommentsGiven = commentsData?.length || 0
 
       setSocialStats({
         totalLikesReceived,
@@ -317,6 +338,44 @@ function Profile() {
     }
   }
 
+  // 删除评论记录
+  const handleDeleteComment = async (commentId) => {
+    if (!window.confirm('确定要删除这条评论吗？')) {
+      return
+    }
+
+    try {
+      const { user } = await getCurrentUser()
+      if (!user) {
+        alert(t('error.login_required'))
+        return
+      }
+
+      // 从 comments 表中删除记录
+      const { error } = await supabase
+        .from('comments')
+        .delete()
+        .eq('id', commentId)
+        .eq('user_id', user.id)
+
+      if (error) throw error
+
+      // 从本地状态中移除
+      setUserComments(prev => prev.filter(comment => comment.id !== commentId))
+      
+      // 更新社交统计
+      setSocialStats(prev => ({
+        ...prev,
+        totalCommentsGiven: Math.max(0, prev.totalCommentsGiven - 1)
+      }))
+
+      alert('评论已删除')
+    } catch (error) {
+      console.error('删除评论失败:', error)
+      alert('删除失败，请重试')
+    }
+  }
+
   // 头像功能已移除，使用首字母头像
 
   if (loading) {
@@ -365,25 +424,37 @@ function Profile() {
         <div className="bg-gradient-to-r from-wimbledon-green/10 to-wimbledon-grass/10 rounded-2xl shadow-md p-6 mb-6">
           <h2 className="text-lg font-semibold text-gray-800 mb-4">{t('profile.social_stats.title')}</h2>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-wimbledon-green">{socialStats.totalLikesReceived}</div>
-              <div className="text-xs text-gray-600">{t('profile.social_stats.total_likes_received')}</div>
-            </div>
-            <div className="text-center">
+            <div 
+              className="text-center cursor-pointer hover:bg-wimbledon-green/5 rounded-lg p-2 transition-colors"
+              onClick={() => setSocialTab('posts')}
+            >
               <div className="text-2xl font-bold text-wimbledon-green">{socialStats.totalPosts}</div>
               <div className="text-xs text-gray-600">{t('profile.social_stats.total_posts')}</div>
             </div>
-            <div className="text-center">
+            <div 
+              className="text-center cursor-pointer hover:bg-wimbledon-green/5 rounded-lg p-2 transition-colors"
+              onClick={() => setSocialTab('reposts')}
+            >
               <div className="text-2xl font-bold text-wimbledon-green">{socialStats.totalReposts}</div>
               <div className="text-xs text-gray-600">{t('profile.social_stats.total_reposts')}</div>
             </div>
-            <div className="text-center">
+            <div 
+              className="text-center cursor-pointer hover:bg-wimbledon-green/5 rounded-lg p-2 transition-colors"
+              onClick={() => setSocialTab('interactions')}
+            >
               <div className="text-2xl font-bold text-wimbledon-green">{socialStats.totalLikesGiven}</div>
               <div className="text-xs text-gray-600">{t('profile.social_stats.total_likes_given')}</div>
             </div>
-            <div className="text-center">
+            <div 
+              className="text-center cursor-pointer hover:bg-wimbledon-green/5 rounded-lg p-2 transition-colors"
+              onClick={() => setSocialTab('comments')}
+            >
               <div className="text-2xl font-bold text-wimbledon-green">{socialStats.totalCommentsGiven}</div>
               <div className="text-xs text-gray-600">{t('profile.social_stats.total_comments_given')}</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-wimbledon-green">{socialStats.totalLikesReceived}</div>
+              <div className="text-xs text-gray-600">{t('profile.social_stats.total_likes_received')}</div>
             </div>
           </div>
         </div>
@@ -402,6 +473,12 @@ function Profile() {
               className={`pb-3 px-1 font-medium ${socialTab === 'reposts' ? 'text-wimbledon-green border-b-2 border-wimbledon-green' : 'text-gray-500'}`}
             >
               {t('profile.social_stats.reposts')} ({socialStats.totalReposts})
+            </button>
+            <button
+              onClick={() => setSocialTab('comments')}
+              className={`pb-3 px-1 font-medium ${socialTab === 'comments' ? 'text-wimbledon-green border-b-2 border-wimbledon-green' : 'text-gray-500'}`}
+            >
+              {t('profile.social_stats.comments')} ({socialStats.totalCommentsGiven})
             </button>
             <button
               onClick={() => setSocialTab('interactions')}
@@ -560,6 +637,84 @@ function Profile() {
                 <h3 className="font-medium text-gray-800 mb-4">{t('profile.social_stats.commented_posts')}</h3>
                 <p className="text-gray-500 text-sm text-center py-4">{t('profile.social_stats.comments_coming_soon')}</p>
               </div>
+            </div>
+          )}
+
+          {/* 评论记录 */}
+          {socialTab === 'comments' && (
+            <div>
+              {userComments.length > 0 ? (
+                <div className="space-y-4">
+                  {userComments.map((comment) => (
+                    <div key={comment.id} className="bg-gray-50 rounded-xl p-4">
+                      <div className="flex justify-between items-start mb-3">
+                        <div className="flex items-center">
+                          <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-sm mr-2">
+                            {comment.profiles?.username?.charAt(0) || 'U'}
+                          </div>
+                          <div>
+                            <div className="font-medium text-sm">@{comment.profiles?.username || t('profile.default_username')}</div>
+                            <div className="text-xs text-gray-500">{formatTime(comment.created_at)}</div>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => handleDeleteComment(comment.id)}
+                          className="text-xs text-red-500 hover:text-red-700"
+                          title="删除评论"
+                        >
+                          删除
+                        </button>
+                      </div>
+                      
+                      <div className="text-gray-800 text-sm mb-3 whitespace-pre-wrap">
+                        {comment.content}
+                      </div>
+                      
+                      <div className="flex items-center text-xs text-gray-500">
+                        <span className="mr-4">❤️ {comment.like_count || 0} {t('community.like')}</span>
+                        <span className="mr-4">💬 {comment.reply_count || 0} {t('community.reply')}</span>
+                      </div>
+                      
+                      {comment.posts && (
+                        <div className="mt-3 pt-3 border-t border-gray-200">
+                          <div className="text-xs text-gray-500 mb-1">
+                            {t('profile.social_stats.comment_on')}
+                          </div>
+                          <div className="bg-white rounded-lg p-2 border border-gray-200">
+                            <div className="flex items-center mb-1">
+                              <div className="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center text-xs mr-1">
+                                {comment.posts.profiles?.username?.charAt(0) || 'U'}
+                              </div>
+                              <span className="text-xs font-medium">
+                                @{comment.posts.profiles?.username || t('profile.default_username')}
+                              </span>
+                            </div>
+                            <p className="text-xs text-gray-700 line-clamp-2">{comment.posts.content}</p>
+                            <button
+                              onClick={() => navigate(`/post/${comment.posts.id}`)}
+                              className="mt-1 text-xs text-wimbledon-green hover:text-wimbledon-grass"
+                            >
+                              {t('profile.social_stats.view_original_post')}
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <span className="text-4xl mb-4 block">💬</span>
+                  <p className="text-gray-500 mb-2">{t('profile.social_stats.no_comments_yet')}</p>
+                  <p className="text-sm text-gray-400">{t('profile.social_stats.comment_hint')}</p>
+                  <button
+                    onClick={() => navigate('/community')}
+                    className="mt-4 bg-wimbledon-grass hover:bg-wimbledon-green text-white px-4 py-2 rounded-lg text-sm"
+                  >
+                    {t('profile.social_stats.go_to_community')}
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>

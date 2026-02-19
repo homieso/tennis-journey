@@ -172,6 +172,18 @@ const translations = {
     'profile.social_stats.commented_posts': '评论过的帖子',
     'profile.social_stats.comments_coming_soon': '评论功能即将上线',
     'profile.social_stats.posts_count': '({count})',
+    'profile.social_stats.comments': '評論',
+    'profile.social_stats.comment_on': '評論於',
+    'profile.social_stats.view_original_post': '查看原帖',
+    'profile.social_stats.no_comments_yet': '還沒有發表過評論',
+    'profile.social_stats.comment_hint': '在社群發現有趣的內容可以發表評論',
+    'community.reply': '回覆',
+    'profile.social_stats.comments': '评论',
+    'profile.social_stats.comment_on': '评论于',
+    'profile.social_stats.view_original_post': '查看原帖',
+    'profile.social_stats.no_comments_yet': '还没有发表过评论',
+    'profile.social_stats.comment_hint': '在社区发现有趣的内容可以发表评论',
+    'community.reply': '回复',
     
     // 社区
     'community.title': '社区广场',
@@ -537,6 +549,12 @@ const translations = {
     'profile.social_stats.commented_posts': 'Commented Posts',
     'profile.social_stats.comments_coming_soon': 'Comments feature coming soon',
     'profile.social_stats.posts_count': '({count})',
+    'profile.social_stats.comments': 'Comments',
+    'profile.social_stats.comment_on': 'Commented on',
+    'profile.social_stats.view_original_post': 'View original post',
+    'profile.social_stats.no_comments_yet': 'No comments yet',
+    'profile.social_stats.comment_hint': 'Discover interesting content in the Community to comment on',
+    'community.reply': 'Reply',
     
     // Profile - Reports
     'profile.reports.title': 'My Scout Reports',

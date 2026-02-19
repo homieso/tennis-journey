@@ -442,15 +442,17 @@ function CommentSection({ postId, postAuthorId }) {
                       <div className="flex items-center space-x-2">
                         <button
                           onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                          className="text-gray-500 hover:text-gray-700 text-sm"
+                          className="text-gray-500 hover:text-gray-700 text-lg"
+                          title={t('postDetail.emoji')}
                         >
-                          {t('postDetail.emoji')}
+                          😊
                         </button>
                         <button
                           onClick={() => document.getElementById('comment-image-upload').click()}
-                          className="text-gray-500 hover:text-gray-700 text-sm"
+                          className="text-gray-500 hover:text-gray-700 text-lg"
+                          title={t('postDetail.upload_image')}
                         >
-                          {t('postDetail.upload_image')}
+                          📷
                         </button>
                         <input
                           id="comment-image-upload"
@@ -549,15 +551,17 @@ function CommentSection({ postId, postAuthorId }) {
               <div className="flex items-center space-x-3">
                 <button
                   onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                  className="text-gray-500 hover:text-gray-700 text-sm"
+                  className="text-gray-500 hover:text-gray-700 text-lg"
+                  title={t('postDetail.emoji')}
                 >
-                  {t('postDetail.emoji')}
+                  😊
                 </button>
                 <button
                   onClick={() => document.getElementById('main-comment-image-upload').click()}
-                  className="text-gray-500 hover:text-gray-700 text-sm"
+                  className="text-gray-500 hover:text-gray-700 text-lg"
+                  title={t('postDetail.upload_image')}
                 >
-                  {t('postDetail.upload_image')}
+                  📷
                 </button>
                 <input
                   id="main-comment-image-upload"
