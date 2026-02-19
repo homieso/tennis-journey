@@ -222,7 +222,13 @@ const translations = {
     'postDetail.login_to_comment': '登录后即可评论',
     'postDetail.go_login': '去登录',
     'postDetail.load_more': '加载更多评论',
-    'postCard.repost_success': '转发成功！',
+    'postDetail.loading_comments': '加载评论中...',
+    'postDetail.post_not_found': '帖子不存在',
+    'postDetail.post_deleted': '该帖子可能已被删除或不存在',
+    'postDetail.back_to_community': '返回社区',
+    'postDetail.back': '返回',
+    'postCard.repost_success': '转发成功！可以在你的个人主页查看',
+    'postCard.repost_failed': '转发失败，请重试',
 
     // 定价页面
     'pricing.title': '解锁你的网球进阶之路',
@@ -588,6 +594,11 @@ const translations = {
     'postDetail.login_to_comment': 'Log in to comment',
     'postDetail.go_login': 'Go to login',
     'postDetail.load_more': 'Load more comments',
+    'postDetail.loading_comments': 'Loading comments...',
+    'postDetail.post_not_found': 'Post not found',
+    'postDetail.post_deleted': 'This post may have been deleted or does not exist',
+    'postDetail.back_to_community': 'Back to community',
+    'postDetail.back': 'Back',
     'postCard.repost_success': 'Repost successful!',
     
     'scoutReport.loading': 'Loading report...',
@@ -1072,6 +1083,11 @@ const translations = {
     'postDetail.login_to_comment': '登入後即可評論',
     'postDetail.go_login': '去登入',
     'postDetail.load_more': '載入更多評論',
+    'postDetail.loading_comments': '載入評論中...',
+    'postDetail.post_not_found': '帖子不存在',
+    'postDetail.post_deleted': '該帖子可能已被刪除或不存在',
+    'postDetail.back_to_community': '返回社群',
+    'postDetail.back': '返回',
     'postCard.repost_success': '轉發成功！',
 
     'scoutReport.loading': '載入報告中...',

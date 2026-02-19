@@ -6,6 +6,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { getCurrentUser } from '../lib/auth'
 import { useTranslation } from '../lib/i18n'
+import toast from 'react-hot-toast'
 
 function PostCard({ post, onLikeUpdate, onCommentUpdate, onRepostUpdate, onDelete }) {
   const { t, currentLanguage } = useTranslation()
@@ -184,63 +185,39 @@ function PostCard({ post, onLikeUpdate, onCommentUpdate, onRepostUpdate, onDelet
   
   // 确认转发
   const handleConfirmRepost = async () => {
-    setShowRepostModal(false)
+    if (!currentUser) {
+      navigate('/login')
+      return
+    }
     
     setLoading(true)
     try {
-      // 1. 创建新的帖子（转发）
-      const { data: newPost, error: postError } = await supabase
-        .from('posts')
-        .insert([
-          {
-            user_id: currentUser.id,
-            content: repostComment || t('community.default_repost_content'),
-            original_post_id: post.id,
-            like_count: 0,
-            comment_count: 0,
-            repost_count: 0,
-            media_urls: post.media_urls || '',
-            media_type: post.media_type || 'none',
-            visibility: 'public'
-          }
-        ])
-        .select()
-        .single()
-      
-      if (postError) throw postError
-      
-      // 2. 记录到 reposts 表（用于快速查询）
-      const { error: repostError } = await supabase
+      // 调用 Supabase 插入 reposts 表
+      const { data, error } = await supabase
         .from('reposts')
-        .insert([
-          {
-            user_id: currentUser.id,
-            post_id: newPost.id,
-            original_post_id: post.id,
-            comment: repostComment || null
-          }
-        ])
+        .insert([{
+          user_id: currentUser.id,
+          post_id: post.id,
+          original_post_id: post.original_post_id || post.id,
+          comment: repostComment || null
+        }])
+        .select()
+        .single();
       
-      if (repostError) throw repostError
+      if (error) throw error;
       
-      // 3. 更新原帖的转发计数
-      const { error: updateError } = await supabase
-        .from('posts')
-        .update({ repost_count: (post.repost_count || 0) + 1 })
-        .eq('id', post.id)
+      setShowRepostModal(false);
+      setReposted(true);
+      onRepostUpdate?.(post.id, 'increment');
       
-      if (updateError) throw updateError
-      
-      setReposted(true)
-      onRepostUpdate?.(post.id, 'increment')
-      alert(t('postCard.repost_success', t('community.repost_success')))
-      
+      // 使用 toast 显示成功消息
+      toast.success(t('postCard.repost_success'));
     } catch (error) {
-      console.error('转发失败:', error)
-      alert('转发失败，请重试')
+      console.error('转发失败:', error);
+      toast.error(t('postCard.repost_failed'));
     } finally {
-      setLoading(false)
-      setRepostComment('')
+      setLoading(false);
+      setRepostComment('');
     }
   }
   
@@ -626,6 +603,50 @@ function PostCard({ post, onLikeUpdate, onCommentUpdate, onRepostUpdate, onDelet
                 </div>
               </>
             )}
+          </div>
+        </div>
+      )}
+      
+      {/* 转发弹窗 */}
+      {showRepostModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-gray-900">转发</h3>
+              <button
+                onClick={handleCancelRepost}
+                className="text-gray-400 hover:text-gray-600 text-xl"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="mb-4">
+              <p className="text-sm text-gray-600 mb-2">添加转发评论（可选）</p>
+              <textarea
+                value={repostComment}
+                onChange={(e) => setRepostComment(e.target.value)}
+                placeholder="说点什么..."
+                rows={3}
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-wimbledon-green focus:border-transparent outline-none transition-all resize-none"
+              />
+            </div>
+            
+            <div className="flex gap-3">
+              <button
+                onClick={handleCancelRepost}
+                className="flex-1 px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                取消
+              </button>
+              <button
+                onClick={handleConfirmRepost}
+                disabled={loading}
+                className="flex-1 px-4 py-2.5 bg-wimbledon-grass hover:bg-wimbledon-green text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {loading ? '转发中...' : '确认转发'}
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -279,6 +279,44 @@ function Profile() {
     }
   }
 
+  // 删除转发记录
+  const handleDeleteRepost = async (postId) => {
+    if (!window.confirm('确定要删除这条转发吗？')) {
+      return
+    }
+
+    try {
+      const { user } = await getCurrentUser()
+      if (!user) {
+        alert(t('error.login_required'))
+        return
+      }
+
+      // 从 reposts 表中删除记录
+      const { error } = await supabase
+        .from('reposts')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('post_id', postId)
+
+      if (error) throw error
+
+      // 从本地状态中移除
+      setUserReposts(prev => prev.filter(post => post.id !== postId))
+      
+      // 更新社交统计
+      setSocialStats(prev => ({
+        ...prev,
+        totalReposts: Math.max(0, prev.totalReposts - 1)
+      }))
+
+      alert('转发已删除')
+    } catch (error) {
+      console.error('删除转发失败:', error)
+      alert('删除失败，请重试')
+    }
+  }
+
   // 头像功能已移除，使用首字母头像
 
   if (loading) {
@@ -435,10 +473,19 @@ function Profile() {
                 <div className="space-y-4">
                   {userReposts.map((post) => (
                     <div key={post.id} className="bg-gray-50 rounded-xl p-4">
-                      {/* 转发标识 */}
-                      <div className="flex items-center text-sm text-gray-500 mb-2">
-                        <span className="mr-1">🔄</span>
-                        <span>{t('profile.social_stats.reposted_by_you')}</span>
+                      {/* 转发标识和删除按钮 */}
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center text-sm text-gray-500">
+                          <span className="mr-1">🔄</span>
+                          <span>{t('profile.social_stats.reposted_by_you')}</span>
+                        </div>
+                        <button
+                          onClick={() => handleDeleteRepost(post.id)}
+                          className="text-xs text-red-500 hover:text-red-700"
+                          title="删除转发"
+                        >
+                          删除
+                        </button>
                       </div>
                       
                       {/* 原帖信息 */}

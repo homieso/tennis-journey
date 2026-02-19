@@ -184,21 +184,58 @@ function ScoutReportNew() {
       
       const language = profile?.preferred_language || 'zh'
       
-      // 调用长图生成和发帖函数
-      const result = await generateAndPostReportScreenshot(
+      // 1. 生成长图
+      const screenshotUrl = await generateAndPostReportScreenshot(
         reportContainerRef.current,
         user.id,
         report.id,
         language
       )
       
-      setPostInfo(result)
+      // 2. 上传到 Storage
+      const uploadedUrl = screenshotUrl; // 假设 generateAndPostReportScreenshot 返回的是上传后的URL
+      
+      // 3. 创建帖子（确保用户已登录）
+      const { data: post, error } = await supabase
+        .from('posts')
+        .insert([{
+          user_id: user.id,
+          report_id: report.id,
+          content_zh: '我的挑战成功了！快看我的专属球探报告！',
+          content_en: 'I completed the challenge! Check out my exclusive scout report!',
+          content_zh_tw: '我的挑戰成功了！快看我的專屬球探報告！',
+          media_urls: [uploadedUrl],
+          is_published: true,
+          published_at: new Date().toISOString()
+        }])
+        .select()
+        .single()
+      
+      if (error) {
+        console.error('创建帖子失败:', error)
+        throw new Error(`发布失败: ${error.message}`)
+      }
+      
+      // 4. 更新报告状态
+      await supabase
+        .from('scout_reports')
+        .update({ 
+          is_published: true, 
+          published_at: new Date().toISOString(), 
+          post_id: post.id 
+        })
+        .eq('id', report.id)
+      
+      setPostInfo({
+        postId: post.id,
+        screenshotUrl: uploadedUrl
+      })
       setShowSuccessMessage(true)
       
       // 5秒后自动隐藏成功消息
       setTimeout(() => setShowSuccessMessage(false), 5000)
       
-      console.log('长图生成和发帖成功:', result)
+      console.log('长图生成和发帖成功:', post.id)
     } catch (error) {
       console.error('长图生成和发帖失败:', error)
       alert(`生成失败: ${error.message}`)
