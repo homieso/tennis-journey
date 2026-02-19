@@ -15,6 +15,7 @@ function CommentSection({ postId, postAuthorId }) {
   const [comments, setComments] = useState([])
   const [loading, setLoading] = useState(true)
   const [currentUser, setCurrentUser] = useState(null)
+  const [userProfile, setUserProfile] = useState(null)
   const [commentContent, setCommentContent] = useState('')
   const [replyingTo, setReplyingTo] = useState(null)
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
@@ -23,11 +24,20 @@ function CommentSection({ postId, postAuthorId }) {
   const [simultaneousRepost, setSimultaneousRepost] = useState(false)
   const [posting, setPosting] = useState(false)
   const [page, setPage] = useState(1)
-  const [hasMore, setHasMore] = useState(true)
+  const [hasMore, setHasMore] = useState(false)
   const [showReplyInput, setShowReplyInput] = useState({})
   const [lightboxOpen, setLightboxOpen] = useState(false)
   const [lightboxIndex, setLightboxIndex] = useState(0)
   const emojiPickerRef = useRef(null)
+
+  // 管理员ID
+  const adminUserId = 'dcee2e34-45f0-4506-9bac-4bdf0956273c'
+  const isAdmin = currentUser?.id === adminUserId
+  
+  // 判断用户权限：管理员或已认证用户
+  const canInteract = currentUser &&
+    (currentUser.id === adminUserId ||
+     userProfile?.is_approved === true);
 
   // 每页加载的评论数
   const COMMENTS_PER_PAGE = 10
@@ -43,68 +53,71 @@ function CommentSection({ postId, postAuthorId }) {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  // 获取当前用户
+  // 获取当前用户和用户资料
   useEffect(() => {
     const fetchCurrentUser = async () => {
       const { user } = await getCurrentUser()
       setCurrentUser(user)
+      
+      // 如果用户已登录，获取用户资料（包括 is_approved 字段）
+      if (user?.id) {
+        try {
+          const { data: profile, error } = await supabase
+            .from('profiles')
+            .select('id, username, display_name, avatar_url, location, playing_years, self_rated_ntrp, is_approved')
+            .eq('id', user.id)
+            .single()
+          
+          if (error) {
+            console.error('获取用户资料失败:', error)
+          } else {
+            setUserProfile(profile)
+          }
+        } catch (error) {
+          console.error('获取用户资料异常:', error)
+        }
+      }
     }
     fetchCurrentUser()
   }, [])
 
-  // 加载评论
   const loadComments = async (pageNum = 1, append = false) => {
     if (!postId) return
 
     setLoading(true)
     try {
-      const from = (pageNum - 1) * COMMENTS_PER_PAGE
-      const to = from + COMMENTS_PER_PAGE - 1
-
-      const { data, error, count } = await supabase
+      // 1. 只查 comments 表，不要关联
+      const { data: comments, error } = await supabase
         .from('comments')
-        .select(`
-          *,
-          profiles (
-            id,
-            username,
-            display_name,
-            avatar_url,
-            location,
-            playing_years,
-            self_rated_ntrp
-          ),
-          replies:comments!parent_id (
-            *,
-            profiles (
-              id,
-              username,
-              display_name,
-              avatar_url,
-              location,
-              playing_years,
-              self_rated_ntrp
-            )
-          )
-        `, { count: 'exact' })
+        .select('*')
         .eq('post_id', postId)
-        .is('parent_id', null) // 只获取顶级评论
+        .is('parent_id', null)
         .order('created_at', { ascending: false })
-        .range(from, to)
 
       if (error) throw error
 
-      if (append) {
-        setComments(prev => [...prev, ...data])
-      } else {
-        setComments(data)
-      }
+      // 2. 如果有评论，单独查用户信息
+      if (comments && comments.length > 0) {
+        const userIds = [...new Set(comments.map(c => c.user_id))]
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, username, display_name, avatar_url, location, playing_years, self_rated_ntrp')
+          .in('id', userIds)
 
-      setHasMore(data.length === COMMENTS_PER_PAGE)
-      setPage(pageNum)
+        // 3. 合并数据
+        const profilesMap = (profiles || []).reduce((acc, p) => ({ ...acc, [p.id]: p }), {})
+        const commentsWithProfiles = comments.map(comment => ({
+          ...comment,
+          profiles: profilesMap[comment.user_id] || null
+        }))
+
+        setComments(commentsWithProfiles)
+      } else {
+        setComments([])
+      }
     } catch (error) {
       console.error('加载评论失败:', error)
-      toast.error('加载评论失败')
+      toast.error(t('error.load_failed'))
     } finally {
       setLoading(false)
     }
@@ -156,6 +169,12 @@ function CommentSection({ postId, postAuthorId }) {
       return
     }
 
+    // 检查用户权限
+    if (!canInteract) {
+      toast.error(t('error.permission_denied', '您需要完成7天挑战或等待管理员批准后才能评论'))
+      return
+    }
+
     if (!commentContent.trim()) {
       toast.error(t('postDetail.comment_required'))
       return
@@ -163,12 +182,13 @@ function CommentSection({ postId, postAuthorId }) {
 
     setPosting(true)
     try {
-      // 1. 创建评论
+      // 1. 创建评论 - 使用最简单的数据格式
       const commentData = {
         user_id: currentUser.id,
         post_id: postId,
         content: commentContent,
-        parent_id: replyingTo?.id || null
+        parent_id: replyingTo?.id || null,
+        images: uploadedImageUrls || []
       }
 
       console.log('发布评论数据:', commentData)
@@ -177,18 +197,7 @@ function CommentSection({ postId, postAuthorId }) {
       const { data: comment, error } = await supabase
         .from('comments')
         .insert([commentData])
-        .select(`
-          *,
-          profiles (
-            id,
-            username,
-            display_name,
-            avatar_url,
-            location,
-            playing_years,
-            self_rated_ntrp
-          )
-        `)
+        .select()
         .single()
 
       if (error) {
@@ -197,6 +206,20 @@ function CommentSection({ postId, postAuthorId }) {
       }
 
       console.log('评论创建成功:', comment)
+
+      // 获取用户信息
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('id, username, display_name, avatar_url, location, playing_years, self_rated_ntrp')
+        .eq('id', currentUser.id)
+        .single()
+
+      const commentWithProfile = {
+        ...comment,
+        profiles: profile || null
+      }
+
+      console.log('评论带用户信息:', commentWithProfile)
 
       // 2. 如果勾选了同时转发，创建转发记录
       if (simultaneousRepost && !replyingTo) {
@@ -223,14 +246,14 @@ function CommentSection({ postId, postAuthorId }) {
           if (c.id === replyingTo.id) {
             return {
               ...c,
-              replies: [...(c.replies || []), comment]
+              replies: [...(c.replies || []), commentWithProfile]
             }
           }
           return c
         }))
       } else {
         // 如果是顶级评论，添加到评论列表顶部
-        setComments(prev => [comment, ...prev])
+        setComments(prev => [commentWithProfile, ...prev])
       }
 
       // 4. 重置表单
@@ -253,7 +276,7 @@ function CommentSection({ postId, postAuthorId }) {
   // 处理点赞评论
   const handleLikeComment = async (commentId) => {
     if (!currentUser) {
-      toast.error('请先登录')
+      toast.error(t('error.login_required'))
       return
     }
 
@@ -289,7 +312,7 @@ function CommentSection({ postId, postAuthorId }) {
       }
     } catch (error) {
       console.error('点赞操作失败:', error)
-      toast.error('操作失败')
+      toast.error(t('error.submission_failed'))
     }
   }
 
@@ -320,7 +343,7 @@ function CommentSection({ postId, postAuthorId }) {
   const handleDeleteComment = async (commentId) => {
     if (!currentUser) return
 
-    const confirmed = window.confirm('确定要删除这条评论吗？')
+    const confirmed = window.confirm(t('admin.delete_confirm'))
     if (!confirmed) return
 
     try {
@@ -347,16 +370,16 @@ function CommentSection({ postId, postAuthorId }) {
       }
 
       setComments(prev => removeComment(prev))
-      toast.success('评论已删除')
+      toast.success(t('admin.delete_success'))
     } catch (error) {
       console.error('删除评论失败:', error)
-      toast.error('删除失败')
+      toast.error(t('error.submission_failed'))
     }
   }
 
-  // 加载更多评论
+  // 加载更多评论 - 现在只是重新加载所有评论
   const handleLoadMore = () => {
-    loadComments(page + 1, true)
+    loadComments(1, false)
   }
 
   // 处理emoji选择
@@ -383,8 +406,8 @@ function CommentSection({ postId, postAuthorId }) {
         
         urls.push(publicUrl)
       } catch (error) {
-        console.error('图片上传失败:', error)
-        toast.error('图片上传失败')
+      console.error('图片上传失败:', error)
+      toast.error(t('error.submission_failed'))
       }
     }
     return urls
@@ -394,7 +417,7 @@ function CommentSection({ postId, postAuthorId }) {
   const handleImageUpload = async (e) => {
     const files = Array.from(e.target.files)
     if (files.length > 3) {
-      toast.error('最多只能上传3张图片')
+      toast.error(t('create_post.max_images', { count: 3 }))
       return
     }
     
@@ -402,8 +425,8 @@ function CommentSection({ postId, postAuthorId }) {
     const urls = await uploadImages(files)
     setUploadedImageUrls(urls)
     
-    // 将图片URL添加到评论内容中
-    const imageText = urls.map(url => `\n![图片](${url})`).join('')
+      // 将图片URL添加到评论内容中
+      const imageText = urls.map(url => `\n![${t('postDetail.upload_image')}](${url})`).join('')
     setCommentContent(prev => prev + imageText)
   }
 
@@ -426,11 +449,11 @@ function CommentSection({ postId, postAuthorId }) {
           <div className="flex-shrink-0 mr-3">
             <div className="w-8 h-8 rounded-full bg-wimbledon-grass/20 flex items-center justify-center text-wimbledon-green text-sm font-bold">
               {comment.profiles?.avatar_url ? (
-                <img 
-                  src={comment.profiles.avatar_url} 
-                  alt="avatar" 
-                  className="w-full h-full rounded-full object-cover" 
-                />
+                  <img 
+                    src={comment.profiles.avatar_url} 
+                    alt={t('profile.avatar_alt')} 
+                    className="w-full h-full rounded-full object-cover" 
+                  />
               ) : (
                 getUserName(comment.profiles).charAt(0).toUpperCase()
               )}
@@ -446,13 +469,13 @@ function CommentSection({ postId, postAuthorId }) {
               </span>
               {isAuthor && (
                 <span className="ml-2 px-1.5 py-0.5 bg-wimbledon-green/10 text-wimbledon-green text-xs rounded">
-                  作者
+                  {t('admin.announcement_label')}
                 </span>
               )}
               {comment.profiles?.location && (
-                <span className="ml-2 text-xs text-gray-500">
-                  📍 {comment.profiles.location}
-                </span>
+              <span className="ml-2 text-xs text-gray-500">
+                📍 {comment.profiles.location}
+              </span>
               )}
               <span className="ml-2 text-xs text-gray-400">
                 {formatTime(comment.created_at)}
@@ -491,7 +514,7 @@ function CommentSection({ postId, postAuthorId }) {
                   onClick={() => handleDeleteComment(comment.id)}
                   className="hover:text-red-600"
                 >
-                  删除
+                  {t('delete')}
                 </button>
               )}
 
@@ -503,7 +526,7 @@ function CommentSection({ postId, postAuthorId }) {
                   }))}
                   className="hover:text-wimbledon-green"
                 >
-                  {showReplyInput[comment.id] ? '收起回复' : `查看${replyCount}条回复`}
+                  {showReplyInput[comment.id] ? t('community.collapse') : t('postDetail.load_more')}
                 </button>
               )}
             </div>
@@ -516,7 +539,7 @@ function CommentSection({ postId, postAuthorId }) {
                     <textarea
                       value={replyingTo?.id === comment.id ? commentContent : ''}
                       onChange={(e) => setCommentContent(e.target.value)}
-                      placeholder={`回复 ${getUserName(comment.profiles)}...`}
+                      placeholder={t('postDetail.reply_to', { name: getUserName(comment.profiles) })}
                       rows={2}
                       className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-wimbledon-green focus:border-transparent outline-none resize-none"
                       onKeyDown={(e) => {
@@ -551,7 +574,7 @@ function CommentSection({ postId, postAuthorId }) {
                             // 处理图片上传
                             const files = Array.from(e.target.files)
                             if (files.length > 3) {
-                              toast.error('最多只能上传3张图片')
+                              toast.error(t('create_post.max_images', { count: 3 }))
                               return
                             }
                             setUploadedImages(files)
@@ -598,6 +621,26 @@ function CommentSection({ postId, postAuthorId }) {
     )
   }
 
+  // 如果已登录但没有评论权限，显示权限提示
+  if (!canInteract) {
+    return (
+      <div className="bg-white rounded-xl p-6 text-center">
+        <p className="text-gray-600 mb-4">
+          {t('error.permission_denied', '您需要完成7天挑战或等待管理员批准后才能评论')}
+        </p>
+        <p className="text-sm text-gray-500 mb-4">
+          {t('postDetail.approval_required', '完成7天网球挑战后，您的账户将自动获得评论权限')}
+        </p>
+        <button
+          onClick={() => window.location.href = '/daily-log'}
+          className="px-4 py-2 bg-wimbledon-green text-white rounded-lg hover:bg-wimbledon-grass"
+        >
+          {t('postDetail.start_challenge')}
+        </button>
+      </div>
+    )
+  }
+
   return (
     <div className="bg-white rounded-xl p-6">
       {/* 评论标题 */}
@@ -625,7 +668,7 @@ function CommentSection({ postId, postAuthorId }) {
             <textarea
               value={commentContent}
               onChange={(e) => setCommentContent(e.target.value)}
-              placeholder={replyingTo ? `回复 ${getUserName(replyingTo.profiles)}...` : t('postDetail.comment_placeholder')}
+              placeholder={replyingTo ? t('postDetail.reply_to', { name: getUserName(replyingTo.profiles) }) : t('postDetail.comment_placeholder')}
               rows={3}
               className="w-full px-4 py-3 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-wimbledon-green focus:border-transparent outline-none resize-none"
               onKeyDown={(e) => {
@@ -654,12 +697,12 @@ function CommentSection({ postId, postAuthorId }) {
               <div className="mt-2 flex flex-wrap gap-2">
                 {uploadedImageUrls.map((url, index) => (
                   <div key={index} className="relative">
-                    <img
-                      src={url}
-                      alt={`上传的图片 ${index + 1}`}
-                      className="w-16 h-16 object-cover rounded-lg cursor-pointer"
-                      onClick={() => openLightbox(index)}
-                    />
+                      <img
+                        src={url}
+                        alt={t('postDetail.upload_image')}
+                        className="w-16 h-16 object-cover rounded-lg cursor-pointer"
+                        onClick={() => openLightbox(index)}
+                      />
                     <button
                       onClick={() => {
                         const newUrls = [...uploadedImageUrls]
@@ -667,6 +710,7 @@ function CommentSection({ postId, postAuthorId }) {
                         setUploadedImageUrls(newUrls)
                       }}
                       className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center"
+                      title={t('delete')}
                     >
                       ×
                     </button>
