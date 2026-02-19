@@ -145,8 +145,11 @@ function Home() {
         }
       } else {
         setProfile(null)
-        // 如果档案不存在，跳转到onboarding
-        navigate('/onboarding')
+        // 如果档案不存在，强制停留在 onboarding
+        // 如果当前不在 onboarding 页面，才跳转
+        if (window.location.pathname !== '/onboarding') {
+          navigate('/onboarding')
+        }
       }
     } catch (error) {
       console.error('获取档案数据失败:', error)

@@ -115,6 +115,11 @@ const translations = {
     'profile.membership.redeem': '兑换激活码',
     'profile.membership.view_challenge': '查看挑战',
     'profile.membership.start_challenge': '开始挑战',
+    
+    // 球探报告按钮
+    'scoutReport.share_report': '分享我的报告',
+    'scoutReport.new_challenge': '开始新的挑战',
+    'scoutReport.back_to_profile': '返回个人主页',
     'profile.tennis_profile.title': '我的网球档案',
     'profile.tennis_profile.edit': '编辑档案',
     'profile.fields.gender': '性别',
@@ -509,6 +514,13 @@ const translations = {
     'profile.membership.congrats': 'Congratulations on completing the challenge!',
     'profile.membership.report_reward': 'You\'ll get 30 days free membership after the report is generated.',
     'profile.membership.subscribe': 'Subscribe',
+    'profile.membership.no_membership': 'No membership yet. Complete the 7-day challenge to get 30 days free!',
+    'profile.membership.view_challenge': 'View Challenge',
+    
+    // 球探报告按钮
+    'scoutReport.share_report': 'Share My Report',
+    'scoutReport.new_challenge': 'Start New Challenge',
+    'scoutReport.back_to_profile': 'Back to Profile',
     'profile.tennis_profile.title': 'My Tennis Profile',
     'profile.tennis_profile.edit': 'Edit Profile',
     'profile.nickname_label': 'Nickname',
@@ -1047,6 +1059,15 @@ const translations = {
     'profile.feedback_button': '📢 意見回饋',
     'profile.collapse_profile': '收起檔案',
     'profile.expand_full_profile': '展開完整檔案',
+    
+    // 個人主頁會員狀態
+    'profile.membership.no_membership': '暫無會員資格，完成7天挑戰即可獲得30天免費會員',
+    'profile.membership.view_challenge': '查看挑戰',
+    
+    // 球探報告按鈕
+    'scoutReport.share_report': '分享我的報告',
+    'scoutReport.new_challenge': '開始新的挑戰',
+    'scoutReport.back_to_profile': '返回個人主頁',
     
     // 個人主頁 - 社交統計
     'profile.social_stats.title': '社交統計',
