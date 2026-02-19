@@ -500,6 +500,10 @@ const translations = {
     'nav.community': 'Community',
     'nav.profile': 'Profile',
     'nav.report': 'Scout Report',
+    'nav.language': 'Language',
+    'nav.language.en': 'English',
+    'nav.language.zh': '简体中文',
+    'nav.language.zh_tw': '繁體中文',
     
     // 首页 - 简化的英文翻译
     'home.welcome': 'Welcome back, {name}!',
@@ -1103,6 +1107,10 @@ const translations = {
     'nav.community': '社群',
     'nav.profile': '個人主頁',
     'nav.report': '球探報告',
+    'nav.language': '語言',
+    'nav.language.en': 'English',
+    'nav.language.zh': '简体中文',
+    'nav.language.zh_tw': '繁體中文',
     
     // 首页 - 简化的繁体翻译
     'home.welcome': '歡迎回來，{name}！',
