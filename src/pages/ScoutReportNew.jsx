@@ -287,7 +287,7 @@ function ScoutReportNew() {
               className={`${postInfo ? 'text-green-600' : 'text-wimbledon-green'} hover:text-wimbledon-grass font-medium`}
               disabled={generatingScreenshot}
             >
-              {generatingScreenshot ? '发布中...' : (postInfo ? '已发布' : '发布到社区')}
+              {generatingScreenshot ? t('scoutReport.publishing') : (postInfo ? t('scoutReport.published') : t('scoutReport.publishButton'))}
             </button>
           </div>
         </div>
@@ -299,7 +299,7 @@ function ScoutReportNew() {
           <div className="bg-green-50 border border-green-200 rounded-xl p-4 flex items-center justify-between">
             <div className="flex items-center">
               <span className="text-green-500 mr-2">✓</span>
-              <span className="text-green-700">报告已成功发布到社区！</span>
+              <span className="text-green-700">{t('scoutReport.publish_success')}</span>
             </div>
             <button
               onClick={() => setShowSuccessMessage(false)}
@@ -317,13 +317,13 @@ function ScoutReportNew() {
           <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-center justify-between">
             <div className="flex items-center">
               <span className="text-blue-500 mr-2">📢</span>
-              <span className="text-blue-700">你的报告已发布到社区</span>
+              <span className="text-blue-700">{t('scoutReport.published_to_community')}</span>
             </div>
             <button
               onClick={() => navigate('/community')}
               className="bg-blue-500 text-white px-3 py-1 rounded-lg text-sm hover:bg-blue-600"
             >
-              查看帖子
+              {t('scoutReport.view_post')}
             </button>
           </div>
         </div>
