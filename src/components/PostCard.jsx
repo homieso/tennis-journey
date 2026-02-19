@@ -39,12 +39,20 @@ function PostCard({ post, onLikeUpdate, onCommentUpdate, onRepostUpdate, onDelet
     const fetchCurrentUser = async () => {
       const { user } = await getCurrentUser()
       setCurrentUser(user)
-      if (user) {
-        checkUserInteractions(user.id)
-      }
     }
     fetchCurrentUser()
   }, [])
+
+  // 当用户或帖子ID变化时检查互动状态
+  useEffect(() => {
+    if (currentUser?.id && post?.id) {
+      checkUserInteractions(currentUser.id)
+    } else {
+      // 用户未登录或帖子无ID，重置状态
+      setLiked(false)
+      setReposted(false)
+    }
+  }, [currentUser?.id, post?.id])
   
   // 根据当前语言获取本地化内容
   function getLocalizedContent() {
@@ -60,25 +68,39 @@ function PostCard({ post, onLikeUpdate, onCommentUpdate, onRepostUpdate, onDelet
   const checkUserInteractions = async (userId) => {
     if (!post?.id) return
     
-    // 检查点赞
-    const { data: likeData } = await supabase
-      .from('likes')
-      .select('id')
-      .eq('user_id', userId)
-      .eq('post_id', post.id)
-      .single()
-    
-    setLiked(!!likeData)
-    
-    // 检查转发
-    const { data: repostData } = await supabase
-      .from('reposts')
-      .select('id')
-      .eq('user_id', userId)
-      .eq('post_id', post.id)
-      .single()
-    
-    setReposted(!!repostData)
+    try {
+      // 检查点赞 - 使用 select 而不是 single 避免错误
+      const { data: likeData, error: likeError } = await supabase
+        .from('likes')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('post_id', post.id)
+      
+      if (likeError) {
+        console.error('检查点赞失败:', likeError)
+        setLiked(false)
+      } else {
+        setLiked(likeData && likeData.length > 0)
+      }
+      
+      // 检查转发
+      const { data: repostData, error: repostError } = await supabase
+        .from('reposts')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('post_id', post.id)
+      
+      if (repostError) {
+        console.error('检查转发失败:', repostError)
+        setReposted(false)
+      } else {
+        setReposted(repostData && repostData.length > 0)
+      }
+    } catch (error) {
+      console.error('检查用户互动失败:', error)
+      setLiked(false)
+      setReposted(false)
+    }
   }
   
   // 解析图片URL

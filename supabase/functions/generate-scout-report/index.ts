@@ -7,10 +7,26 @@ serve(async (req) => {
     
     // 检测域名，决定报告语言
     const origin = req.headers.get('origin') || req.headers.get('referer') || ''
-    const isChineseDomain = origin.includes('tennisjourney.top')
-    const isEnglishDomain = origin.includes('tj-7.vercel.app')
-    // 默认根据域名决定语言，如果没有域名信息则使用中文
-    let reportLanguage = isEnglishDomain ? 'en' : 'zh'
+    console.log(`原始origin: ${origin}`)
+    
+    // 更精确的域名检测
+    let detectedDomain = 'unknown'
+    let reportLanguage = 'zh' // 默认中文
+    
+    if (origin.includes('tj-7.vercel.app')) {
+      detectedDomain = 'international'
+      reportLanguage = 'en'
+      console.log('检测到国际版域名 (tj-7.vercel.app)，使用英文报告')
+    } else if (origin.includes('tennisjourney.top')) {
+      detectedDomain = 'chinese'
+      reportLanguage = 'zh'
+      console.log('检测到国内版域名 (tennisjourney.top)，使用中文报告')
+    } else if (origin.includes('localhost')) {
+      detectedDomain = 'localhost'
+      console.log('检测到本地开发环境，默认使用中文')
+    } else {
+      console.log(`未识别域名: ${origin}，默认使用中文`)
+    }
     
     // 初始化Supabase客户端
     const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
@@ -29,12 +45,12 @@ serve(async (req) => {
       const userPref = profile.preferred_language
       if (['zh', 'en', 'zh_tw'].includes(userPref)) {
         reportLanguage = userPref
-        console.log(`使用用户语言偏好: ${userPref}`)
+        console.log(`使用用户语言偏好: ${userPref}，覆盖域名检测`)
       }
     }
     
     // 调试日志：显示最终决定的语言
-    console.log(`最终报告语言: ${reportLanguage}, origin: ${origin}`)
+    console.log(`最终报告语言: ${reportLanguage}, 检测域名: ${detectedDomain}, origin: ${origin}`)
 
     if (profileError) {
       // 如果是测试模式，创建模拟档案

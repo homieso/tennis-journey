@@ -501,6 +501,14 @@ const translations = {
     'profile.social_stats.comments_coming_soon': 'Comments feature coming soon',
     'profile.social_stats.posts_count': '({count})',
     
+    // Profile - Reports
+    'profile.reports.title': 'My Scout Reports',
+    'profile.reports.no_reports': 'No scout reports yet',
+    'profile.reports.start_challenge': 'Start 7-Day Challenge',
+    'profile.reports.view': 'View →',
+    'profile.reports.published': 'Published',
+    'profile.reports.pending': 'Pending',
+    
     'community.title': 'Community',
     'community.subtitle': 'Users who completed the 7-day challenge share their tennis stories here',
     'community.no_posts': 'No posts yet',
@@ -688,6 +696,8 @@ const translations = {
 
     // Pricing page
     'pricing.title': 'Unlock Your Tennis Journey',
+    'pricing.description': 'After completing the 7-day challenge, choose the right way for you to continue enjoying AI scout report service',
+    'pricing.back': 'Back to Home',
     'pricing.monthlySubscription': 'Monthly Subscription',
     'pricing.redeemCode': 'Redeem Code',
     'pricing.internationalPayment': 'International Payment',
@@ -696,6 +706,26 @@ const translations = {
     'pricing.startChallengeFree': 'Start Challenge (Free)',
     'pricing.unlockFeatures': 'Unlock Features',
     'pricing.seePricing': 'See Pricing',
+    'pricing.monthlyPrice': '$5',
+    'pricing.monthlyPriceCny': '¥35',
+    'pricing.monthlyCardTitle': 'Monthly Subscription',
+    'pricing.redeemCardTitle': 'Activation Code Redemption',
+    'pricing.stripePayment': 'Secure payment via Stripe, supports global credit cards',
+    'pricing.redeemPayment': 'Purchase activation code via Taobao/Weidian, enter to redeem',
+    'pricing.unlimitedReports': 'Unlimited scout report generation',
+    'pricing.viewHistory': 'View historical log records',
+    'pricing.communityDiscussion': 'Participate in community discussions',
+    'pricing.cancelAnyTime': 'Cancel anytime',
+    'pricing.alipayWechat': 'Alipay/WeChat Pay',
+    'pricing.noIntlCard': 'No international credit card required',
+    'pricing.instantActivation': 'Instant activation',
+    'pricing.multipleMonths': 'Can purchase multiple months',
+    'pricing.subscribeButton': 'Subscribe Monthly $5',
+    'pricing.subscribeLoading': 'Redirecting to payment...',
+    'pricing.redeemButton': 'Enter Activation Code',
+    'pricing.redeemHint': 'Search "Tennis Journey" on Taobao/Weidian to purchase',
+    'pricing.freeMembership': '🎉 Users completing 7-day challenge automatically get 30 days free membership',
+    'pricing.paymentNote': 'All payments are processed via Stripe or third-party platforms, we do not store your payment information',
 
     // Redeem page
     'redeem.title': 'Redeem Activation Code',

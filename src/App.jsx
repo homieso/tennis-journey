@@ -565,7 +565,7 @@ function Home() {
               <div
                 key={post.id}
                 className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-all duration-300 transform hover:-translate-y-1 cursor-pointer"
-                onClick={() => navigate(`/community/post/${post.id}`)}
+                onClick={() => navigate(`/post/${post.id}`)}
               >
                 <div className="aspect-video bg-gradient-to-br from-gray-100 to-gray-200 relative overflow-hidden">
                   {post.imageUrl ? (
