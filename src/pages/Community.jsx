@@ -2,7 +2,7 @@
 // 社区广场 - 完整社交功能版
 
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useTranslation } from '../lib/i18n'
 import PostCard from '../components/PostCard'
@@ -11,12 +11,14 @@ import { getCurrentUser } from '../lib/auth'
 
 function Community() {
   const { t } = useTranslation()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [posts, setPosts] = useState([])
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(true)
   const [error, setError] = useState(null)
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const [prefilledContent, setPrefilledContent] = useState('')
   const [currentUser, setCurrentUser] = useState(null)
   const [isAdmin, setIsAdmin] = useState(false)
   const PAGE_SIZE = 10
@@ -35,6 +37,23 @@ function Community() {
     }
     fetchUser()
   }, [])
+
+  // 检查URL参数，如果需要打开创建模态框
+  useEffect(() => {
+    const createParam = searchParams.get('create')
+    const prefilledParam = searchParams.get('prefilled')
+    
+    if (createParam === 'true') {
+      setShowCreateModal(true)
+      if (prefilledParam) {
+        setPrefilledContent(decodeURIComponent(prefilledParam))
+      }
+      // 清除URL参数
+      searchParams.delete('create')
+      searchParams.delete('prefilled')
+      setSearchParams(searchParams)
+    }
+  }, [searchParams, setSearchParams])
 
   useEffect(() => {
     console.log('Community useEffect triggered, page:', page)
@@ -252,6 +271,7 @@ function Community() {
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
         onPostCreated={handlePostCreated}
+        prefilledContent={prefilledContent}
       />
     </div>
   )

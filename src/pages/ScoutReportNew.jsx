@@ -265,6 +265,31 @@ function ScoutReportNew() {
     }
   }
 
+  const handleGenerateTextReport = async () => {
+    try {
+      const { user } = await getCurrentUser()
+      if (!user) {
+        navigate('/login')
+        return
+      }
+
+      // 1. 调用 Edge Function 生成纯享版文案
+      const { data: report, error } = await supabase.functions.invoke('generate-text-report', {
+        body: { user_id: user.id }
+      })
+      
+      if (error) throw error
+      
+      // 2. 导航到社区页面并打开创建模态框
+      // 将内容编码为URL参数
+      const encodedContent = encodeURIComponent(report.text)
+      navigate(`/community?create=true&prefilled=${encodedContent}`)
+    } catch (error) {
+      console.error('Failed to generate text report:', error)
+      alert('Failed to generate report. Please try again.')
+    }
+  }
+
   // 检查是否已有帖子
   useEffect(() => {
     const checkExistingPost = async () => {
@@ -327,13 +352,7 @@ function ScoutReportNew() {
               </h1>
               <p className="text-xs text-gray-500">{t('scoutReport.swipe_hint')}</p>
             </div>
-            <button
-              onClick={handleShare}
-              className={`${postInfo ? 'text-green-600' : 'text-wimbledon-green'} hover:text-wimbledon-grass font-medium`}
-              disabled={generatingScreenshot}
-            >
-              {generatingScreenshot ? t('scoutReport.publishing') : (postInfo ? t('scoutReport.published') : t('scoutReport.publishButton'))}
-            </button>
+            <div className="w-10"></div> {/* Empty space for alignment */}
           </div>
         </div>
       </div>
@@ -746,16 +765,10 @@ function ScoutReportNew() {
               
               <div className="space-y-4 w-full max-w-xs">
                 <button
-                  onClick={handleShare}
-                  className="w-full bg-gradient-to-r from-wimbledon-green to-wimbledon-grass text-white font-semibold py-3 rounded-xl hover:shadow-lg transition-all"
+                  onClick={handleGenerateTextReport}
+                  className="w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white font-semibold py-3 rounded-xl hover:shadow-lg transition-all"
                 >
-                  分享我的报告
-                </button>
-                <button
-                  onClick={() => navigate('/challenge')}
-                  className="w-full bg-white border border-wimbledon-green text-wimbledon-green font-semibold py-3 rounded-xl hover:bg-wimbledon-green/5 transition-all"
-                >
-                  开始新的挑战
+                  生成文字纯享版并发布
                 </button>
                 <button
                   onClick={() => navigate('/profile')}

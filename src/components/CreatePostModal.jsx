@@ -6,11 +6,11 @@ import { supabase } from '../lib/supabase'
 import { getCurrentUser } from '../lib/auth'
 import { useTranslation } from '../lib/i18n'
 
-function CreatePostModal({ isOpen, onClose, onPostCreated }) {
+function CreatePostModal({ isOpen, onClose, onPostCreated, prefilledContent = '' }) {
   const { t } = useTranslation()
   const fileInputRef = useRef(null)
   
-  const [content, setContent] = useState('')
+  const [content, setContent] = useState(prefilledContent)
   const [images, setImages] = useState([])
   const [previewUrls, setPreviewUrls] = useState([])
   const [uploading, setUploading] = useState(false)
@@ -33,8 +33,12 @@ function CreatePostModal({ isOpen, onClose, onPostCreated }) {
     }
     if (isOpen) {
       fetchUser()
+      // 如果有预填内容，设置内容
+      if (prefilledContent) {
+        setContent(prefilledContent)
+      }
     }
-  }, [isOpen])
+  }, [isOpen, prefilledContent])
 
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files)
@@ -134,6 +138,22 @@ function CreatePostModal({ isOpen, onClose, onPostCreated }) {
         .single()
 
       if (postError) throw postError
+
+      // 用户发布第一个帖子后，自动标记为已批准
+      try {
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ is_approved: true })
+          .eq('id', user.id);
+        
+        if (updateError) {
+          console.warn('更新用户批准状态失败:', updateError);
+        } else {
+          console.log('用户已自动标记为已批准');
+        }
+      } catch (updateErr) {
+        console.warn('自动批准用户失败:', updateErr);
+      }
 
       // 清理预览URL
       previewUrls.forEach(url => URL.revokeObjectURL(url))

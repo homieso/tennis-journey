@@ -33,6 +33,11 @@ function PostCard({ post, onLikeUpdate, onCommentUpdate, onRepostUpdate, onDelet
   const adminUserId = 'dcee2e34-45f0-4506-9bac-4bdf0956273c'
   const isAdmin = currentUser?.id === adminUserId
   
+  // 判断用户权限：管理员或已认证用户
+  const canInteract = currentUser &&
+    (currentUser.id === adminUserId ||
+     currentUser.profile?.is_approved === true);
+  
   // 帖子内容行数计算
   const MAX_LINES = 3
   const localizedContent = getLocalizedContent()
@@ -484,30 +489,55 @@ function PostCard({ post, onLikeUpdate, onCommentUpdate, onRepostUpdate, onDelet
               <span className="text-xs opacity-80">{t('community.like')}</span>
             </button>
             
-            {/* 评论按钮 */}
-            <button
-              type="button"
-              onClick={handleCommentClick}
-              className="flex items-center gap-1.5 text-gray-500 hover:text-wimbledon-green transition-colors text-sm"
-            >
-              <span className="text-lg">💬</span>
-              <span className="font-medium">{post.comment_count || 0}</span>
-              <span className="text-xs opacity-80">{t('community.comment')}</span>
-            </button>
+            {/* 评论按钮：只有认证用户可用 */}
+            {canInteract ? (
+              <button
+                type="button"
+                onClick={handleCommentClick}
+                className="flex items-center gap-1.5 text-gray-500 hover:text-wimbledon-green transition-colors text-sm"
+              >
+                <span className="text-lg">💬</span>
+                <span className="font-medium">{post.comment_count || 0}</span>
+                <span className="text-xs opacity-80">{t('community.comment')}</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => toast.info(t('postCard.need_approval', 'This feature requires you to complete the 7-day challenge and get approved. Start your journey now!'))}
+                className="flex items-center gap-1.5 text-gray-300 cursor-not-allowed text-sm opacity-50"
+              >
+                <span className="text-lg">💬</span>
+                <span className="font-medium">{post.comment_count || 0}</span>
+                <span className="text-xs opacity-80">{t('community.comment')}</span>
+              </button>
+            )}
             
-            {/* 转发按钮 */}
-            <button
-              type="button"
-              onClick={handleRepost}
-              disabled={loading || !currentUser || reposted}
-              className={`flex items-center gap-1.5 transition-colors text-sm ${
-                reposted ? 'text-blue-500' : 'text-gray-500 hover:text-blue-500'
-              }`}
-            >
-              <span className="text-lg">🔄</span>
-              <span className="font-medium">{post.repost_count || 0}</span>
-              <span className="text-xs opacity-80">{t('community.repost')}</span>
-            </button>
+            {/* 转发按钮：只有认证用户可用 */}
+            {canInteract ? (
+              <button
+                type="button"
+                onClick={handleRepost}
+                disabled={loading || !currentUser || reposted}
+                className={`flex items-center gap-1.5 transition-colors text-sm ${
+                  reposted ? 'text-blue-500' : 'text-gray-500 hover:text-blue-500'
+                }`}
+              >
+                <span className="text-lg">🔄</span>
+                <span className="font-medium">{post.repost_count || 0}</span>
+                <span className="text-xs opacity-80">{t('community.repost')}</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => toast.info(t('postCard.need_approval', 'This feature requires you to complete the 7-day challenge and get approved. Start your journey now!'))}
+                disabled={true}
+                className="flex items-center gap-1.5 text-gray-300 cursor-not-allowed text-sm opacity-50"
+              >
+                <span className="text-lg">🔄</span>
+                <span className="font-medium">{post.repost_count || 0}</span>
+                <span className="text-xs opacity-80">{t('community.repost')}</span>
+              </button>
+            )}
           </div>
           
           {/* 删除按钮（仅管理员可见） */}
