@@ -1398,16 +1398,37 @@ const translations = {
 }
 
 // 获取当前语言
-export function getCurrentLanguage() {
-  // 不再检测浏览器语言，直接返回英文
+export const getCurrentLanguage = () => {
+  // 1. 优先使用用户保存的语言
+  const savedLanguage = localStorage.getItem('preferred_language');
+  if (savedLanguage && savedLanguage !== 'undefined') {
+    console.log('Using saved language:', savedLanguage);
+    return savedLanguage;
+  }
+
+  // 2. 其次根据域名
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    if (hostname.includes('tennisjourney.top')) {
+      return 'zh';
+    }
+    if (hostname.includes('tj-7.vercel.app')) {
+      return 'en';
+    }
+  }
+
+  // 3. 最后默认英文
   return 'en';
-}
+};
 
 // 设置语言
 export function setLanguage(lang) {
   if (SUPPORTED_LANGUAGES[lang]) {
-    localStorage.setItem('preferred_language', lang)
-    window.location.reload() // 重新加载页面以应用新语言
+    localStorage.setItem('preferred_language', lang);
+    // 触发自定义事件，让 useTranslation hook 可以监听
+    window.dispatchEvent(new CustomEvent('languageChanged', { detail: lang }));
+    // 强制刷新让所有组件重新渲染
+    window.location.reload();
   }
 }
 
@@ -1425,13 +1446,63 @@ export function t(key, params = {}) {
 }
 
 // React Hook for translations
+import { useState, useEffect, useCallback } from 'react';
+
 export function useTranslation() {
+  const [currentLanguage, setCurrentLanguage] = useState(getCurrentLanguage());
+
+  // 监听语言变化
+  useEffect(() => {
+    const handleLanguageChange = () => {
+      setCurrentLanguage(getCurrentLanguage());
+    };
+
+    // 监听 localStorage 变化（来自其他标签页）
+    const handleStorageChange = (e) => {
+      if (e.key === 'preferred_language') {
+        setCurrentLanguage(getCurrentLanguage());
+      }
+    };
+
+    // 监听自定义事件（来自当前标签页的 setLanguage 调用）
+    window.addEventListener('languageChanged', handleLanguageChange);
+    window.addEventListener('storage', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('languageChanged', handleLanguageChange);
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
+
+  // 包装 setLanguage 函数，更新状态
+  const handleSetLanguage = useCallback((lang) => {
+    if (SUPPORTED_LANGUAGES[lang]) {
+      localStorage.setItem('preferred_language', lang);
+      setCurrentLanguage(lang);
+      // 强制刷新让所有组件重新渲染
+      window.location.reload();
+    }
+  }, []);
+
+  // 包装 t 函数，使用当前语言
+  const tFunction = useCallback((key, params = {}) => {
+    const lang = currentLanguage;
+    let translation = translations[lang]?.[key] || translations[DEFAULT_LANGUAGE]?.[key] || key;
+    
+    // 替换参数
+    Object.keys(params).forEach(param => {
+      translation = translation.replace(`{${param}}`, params[param]);
+    });
+    
+    return translation;
+  }, [currentLanguage]);
+
   return {
-    t,
-    currentLanguage: getCurrentLanguage(),
-    setLanguage,
+    t: tFunction,
+    currentLanguage,
+    setLanguage: handleSetLanguage,
     supportedLanguages: SUPPORTED_LANGUAGES
-  }
+  };
 }
 
 // 语言切换组件（返回纯JavaScript对象，不包含JSX）
