@@ -1401,34 +1401,57 @@ const translations = {
 export const getCurrentLanguage = () => {
   // 1. 优先使用用户保存的语言
   const savedLanguage = localStorage.getItem('preferred_language');
+  console.log('🔍 getCurrentLanguage检查:');
+  console.log('  - localStorage preferred_language:', savedLanguage);
+  
   if (savedLanguage && savedLanguage !== 'undefined') {
-    console.log('Using saved language:', savedLanguage);
+    console.log('✅ 使用用户保存的语言:', savedLanguage);
     return savedLanguage;
   }
 
   // 2. 其次根据域名
   if (typeof window !== 'undefined') {
     const hostname = window.location.hostname;
+    console.log('  - 当前域名:', hostname);
+    
     if (hostname.includes('tennisjourney.top')) {
+      console.log('✅ 检测到国内版域名，使用简体中文');
       return 'zh';
     }
     if (hostname.includes('tj-7.vercel.app')) {
+      console.log('✅ 检测到国际版域名，使用英文');
       return 'en';
     }
+    
+    console.log('⚠️  域名未匹配任何预设规则');
+  } else {
+    console.log('⚠️  window对象未定义（可能是在服务器端渲染）');
   }
 
   // 3. 最后默认英文
+  console.log('📝 使用默认语言: en');
   return 'en';
 };
 
 // 设置语言
 export function setLanguage(lang) {
+  console.log('🔄 setLanguage被调用，目标语言:', lang);
+  console.log('  - 支持的语言列表:', Object.keys(SUPPORTED_LANGUAGES));
+  console.log('  - 请求的语言是否支持:', SUPPORTED_LANGUAGES[lang] ? '是' : '否');
+  
   if (SUPPORTED_LANGUAGES[lang]) {
+    console.log('✅ 设置语言到localStorage:', lang);
     localStorage.setItem('preferred_language', lang);
+    
     // 触发自定义事件，让 useTranslation hook 可以监听
+    console.log('📢 触发languageChanged事件');
     window.dispatchEvent(new CustomEvent('languageChanged', { detail: lang }));
+    
     // 强制刷新让所有组件重新渲染
+    console.log('🔄 刷新页面以应用语言更改');
     window.location.reload();
+  } else {
+    console.error('❌ 不支持的语言:', lang);
   }
 }
 
@@ -1449,18 +1472,29 @@ export function t(key, params = {}) {
 import { useState, useEffect, useCallback } from 'react';
 
 export function useTranslation() {
-  const [currentLanguage, setCurrentLanguage] = useState(getCurrentLanguage());
+  const initialLanguage = getCurrentLanguage();
+  console.log('🎯 useTranslation初始化，当前语言:', initialLanguage);
+  
+  const [currentLanguage, setCurrentLanguage] = useState(initialLanguage);
 
   // 监听语言变化
   useEffect(() => {
+    console.log('👂 useTranslation开始监听语言变化');
+    
     const handleLanguageChange = () => {
-      setCurrentLanguage(getCurrentLanguage());
+      console.log('📡 收到languageChanged事件');
+      const newLang = getCurrentLanguage();
+      console.log('🔄 更新当前语言状态:', newLang);
+      setCurrentLanguage(newLang);
     };
 
     // 监听 localStorage 变化（来自其他标签页）
     const handleStorageChange = (e) => {
+      console.log('💾 storage事件:', e.key, '=', e.newValue);
       if (e.key === 'preferred_language') {
-        setCurrentLanguage(getCurrentLanguage());
+        console.log('🔄 检测到preferred_language变化，更新语言状态');
+        const newLang = getCurrentLanguage();
+        setCurrentLanguage(newLang);
       }
     };
 
@@ -1469,6 +1503,7 @@ export function useTranslation() {
     window.addEventListener('storage', handleStorageChange);
     
     return () => {
+      console.log('🧹 useTranslation清理监听器');
       window.removeEventListener('languageChanged', handleLanguageChange);
       window.removeEventListener('storage', handleStorageChange);
     };
@@ -1476,12 +1511,9 @@ export function useTranslation() {
 
   // 包装 setLanguage 函数，更新状态
   const handleSetLanguage = useCallback((lang) => {
-    if (SUPPORTED_LANGUAGES[lang]) {
-      localStorage.setItem('preferred_language', lang);
-      setCurrentLanguage(lang);
-      // 强制刷新让所有组件重新渲染
-      window.location.reload();
-    }
+    console.log('🎯 useTranslation.handleSetLanguage被调用，语言:', lang);
+    // 直接调用我们之前定义的setLanguage函数
+    setLanguage(lang);
   }, []);
 
   // 包装 t 函数，使用当前语言
