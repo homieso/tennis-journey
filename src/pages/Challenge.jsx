@@ -50,10 +50,15 @@ function Challenge() {
   // 计算当天截止时间
   const getDayDeadline = (dayIndex) => {
     if (!startDate) return null;
+    
     const start = new Date(startDate + 'T12:00:00');
     const dayDate = new Date(start);
-    dayDate.setDate(start.getDate() + dayIndex - 1);
+    
+    // 第1天的截止时间是开始日的23:59
+    // 第N天的截止时间是开始日 + (N-1) 天的23:59
+    dayDate.setDate(start.getDate() + (dayIndex - 1));
     dayDate.setHours(23, 59, 59, 999);
+    
     return dayDate;
   };
 
@@ -198,15 +203,23 @@ function Challenge() {
         })
       }
 
-      setDays(daysArray)
-
       // 5. 检测是否有漏打卡的情况
       const missedDay = checkForMissedDays(logs, startDateStr)
       if (missedDay && challengeStatus === 'in_progress') {
         console.log('⚠️ 检测到漏打卡:', missedDay)
         setMissedDayInfo(missedDay)
         setShowResetModal(true)
+        
+        // 当检测到漏打卡时，强制所有天数状态为 'locked'，并确保不显示完成提示
+        const lockedDaysArray = daysArray.map(day => ({
+          ...day,
+          status: 'locked'
+        }))
+        setDays(lockedDaysArray)
+        return // 提前返回，避免后续逻辑执行
       }
+
+      setDays(daysArray)
     } catch (error) {
       console.error(t('error.fetch_challenge_failed') + ':', error)
     } finally {
@@ -477,6 +490,28 @@ function Challenge() {
               ))}
             </div>
 
+            {/* 漏打卡引导提示 - 检测到漏打卡但用户未确认重置时显示 */}
+            {missedDayInfo && !showResetModal && challengeStatus === 'in_progress' && (
+              <div className="mt-6 p-6 bg-yellow-50 border border-yellow-200 rounded-xl">
+                <div className="flex items-start">
+                  <div className="flex-shrink-0">
+                    <span className="text-2xl">⚠️</span>
+                  </div>
+                  <div className="ml-4 flex-1">
+                    <p className="text-yellow-800 mb-3">
+                      {t('challenge.missed_guide')}
+                    </p>
+                    <button
+                      onClick={() => setShowResetModal(true)}
+                      className="bg-yellow-500 hover:bg-yellow-600 text-white font-medium px-6 py-2 rounded-lg transition-colors"
+                    >
+                      {t('challenge.reset_now')}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* 今日打卡入口 - 未超出7天且未最终提交时显示 */}
             {!isLockedAfterSubmit && !isPastSevenDays() && currentDayEntry && (
               <div className="border-t border-gray-100 mt-6 pt-6">
@@ -602,10 +637,13 @@ function Challenge() {
                   {t('challenge.reset_title')}
                 </h3>
                 <p className="text-gray-600">
-                  检测到第{missedDayInfo.day}天（{missedDayInfo.date.toLocaleDateString('zh-CN')}）未在截止时间前打卡
+                  {t('challenge.reset_message', {
+                    day: missedDayInfo.day,
+                    date: missedDayInfo.date.toLocaleDateString('zh-CN')
+                  })}
                 </p>
                 <p className="text-sm text-gray-500 mt-2">
-                  挑战已中断，需要重新开始。未审核的记录将被清除。
+                  {t('challenge.reset_detail')}
                 </p>
               </div>
               
@@ -615,14 +653,14 @@ function Challenge() {
                   disabled={submitting}
                   className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium py-3 rounded-xl transition-colors disabled:opacity-50"
                 >
-                  取消
+                  {t('challenge.reset_cancel')}
                 </button>
                 <button
                   onClick={handleConfirmReset}
                   disabled={submitting}
                   className="flex-1 bg-red-600 hover:bg-red-700 text-white font-medium py-3 rounded-xl transition-colors disabled:opacity-50"
                 >
-                  {submitting ? '重置中...' : '重新开始挑战'}
+                  {submitting ? t('challenge.resetting') : t('challenge.reset_confirm')}
                 </button>
               </div>
             </div>

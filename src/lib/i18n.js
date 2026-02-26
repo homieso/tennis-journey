@@ -112,6 +112,8 @@ const translations = {
     'challenge.reset_failed': '重置挑战失败',
     'challenge.reset_cancelled': '已取消重置',
     'challenge.missed_day_reset': '检测到漏打卡，挑战已自动重置',
+    'challenge.missed_guide': '检测到您有一天未在24小时内打卡，挑战已中断。请点击下方按钮重新开始。',
+    'challenge.reset_now': '立即重新开始',
     
     // 个人主页
     'profile.title': '个人主页',
@@ -993,6 +995,8 @@ const translations = {
     'challenge.reset_failed': 'Failed to reset challenge',
     'challenge.reset_cancelled': 'Reset cancelled',
     'challenge.missed_day_reset': 'Missed day detected, challenge automatically reset',
+    'challenge.missed_guide': 'We detected a missed day (no check-in within 24h). Please click below to restart your challenge.',
+    'challenge.reset_now': 'Restart Now',
     
     // 新增翻译键 - 英文
     'post.publish_success': 'Post published successfully!',
@@ -1394,6 +1398,8 @@ const translations = {
     'challenge.reset_failed': '重置挑戰失敗',
     'challenge.reset_cancelled': '已取消重置',
     'challenge.missed_day_reset': '檢測到漏打卡，挑戰已自動重置',
+    'challenge.missed_guide': '檢測到您有一天未在24小時內打卡，挑戰已中斷。請點擊下方按鈕重新開始。',
+    'challenge.reset_now': '立即重新開始',
 
     // 錯誤消息
     'error.required_photos': '請至少上傳一張訓練照片',
