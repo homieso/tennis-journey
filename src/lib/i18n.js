@@ -100,6 +100,19 @@ const translations = {
     'challenge.makeup_log_description': '补打第{day}天的卡',
     'challenge.loading_calendar': '加载日历中...',
     
+    // 新增挑战相关翻译
+    'challenge.deadline': '截止时间',
+    'challenge.reset_title': '挑战中断',
+    'challenge.reset_message': '检测到第{day}天（{date}）未在截止时间前打卡',
+    'challenge.reset_detail': '挑战已中断，需要重新开始。未审核的记录将被清除。',
+    'challenge.reset_confirm': '重新开始挑战',
+    'challenge.reset_cancel': '取消',
+    'challenge.resetting': '重置中...',
+    'challenge.reset_success': '挑战已重置，可以重新开始',
+    'challenge.reset_failed': '重置挑战失败',
+    'challenge.reset_cancelled': '已取消重置',
+    'challenge.missed_day_reset': '检测到漏打卡，挑战已自动重置',
+    
     // 个人主页
     'profile.title': '个人主页',
     'profile.logout': '退出登录',
@@ -968,6 +981,19 @@ const translations = {
     'challenge.today_log_description': 'Upload your training photos and record today\'s reflections',
     'challenge.makeup_log_description': 'Make‑up log for day {day}',
     
+    // 新增挑战相关翻译 - 英文
+    'challenge.deadline': 'Deadline',
+    'challenge.reset_title': 'Challenge Interrupted',
+    'challenge.reset_message': 'Day {day} ({date}) was not logged before the deadline',
+    'challenge.reset_detail': 'The challenge has been interrupted and needs to restart. Unapproved logs will be cleared.',
+    'challenge.reset_confirm': 'Restart Challenge',
+    'challenge.reset_cancel': 'Cancel',
+    'challenge.resetting': 'Resetting...',
+    'challenge.reset_success': 'Challenge reset, you can start over',
+    'challenge.reset_failed': 'Failed to reset challenge',
+    'challenge.reset_cancelled': 'Reset cancelled',
+    'challenge.missed_day_reset': 'Missed day detected, challenge automatically reset',
+    
     // 新增翻译键 - 英文
     'post.publish_success': 'Post published successfully!',
     'scoutReport.no_report': 'No scout report yet, please complete the 7‑day challenge first',
@@ -1355,6 +1381,19 @@ const translations = {
     'challenge.complete.description': '你的球探報告正在生成中，預計1-2分鐘。',
     'challenge.complete.view_report': '查看我的球探報告',
     'challenge.loading_calendar': '載入你的挑戰日曆...',
+
+    // 挑戰重置功能
+    'challenge.deadline': '截止時間',
+    'challenge.reset_title': '挑戰中斷',
+    'challenge.reset_message': '檢測到第{day}天（{date}）未在截止時間前打卡',
+    'challenge.reset_detail': '挑戰已中斷，需要重新開始。未審核的記錄將被清除。',
+    'challenge.reset_confirm': '重新開始挑戰',
+    'challenge.reset_cancel': '取消',
+    'challenge.resetting': '重置中...',
+    'challenge.reset_success': '挑戰已重置，可以重新開始',
+    'challenge.reset_failed': '重置挑戰失敗',
+    'challenge.reset_cancelled': '已取消重置',
+    'challenge.missed_day_reset': '檢測到漏打卡，挑戰已自動重置',
 
     // 錯誤消息
     'error.required_photos': '請至少上傳一張訓練照片',

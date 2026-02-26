@@ -17,6 +17,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { getCurrentUser } from '../lib/auth'
 import { useTranslation } from '../lib/i18n'
+import toast from 'react-hot-toast'
 
 function Challenge() {
   const navigate = useNavigate()
@@ -27,6 +28,8 @@ function Challenge() {
   const [profileUsername, setProfileUsername] = useState('')
   const [challengeStatus, setChallengeStatus] = useState('') // in_progress | awaiting_report | success
   const [submitting, setSubmitting] = useState(false)
+  const [showResetModal, setShowResetModal] = useState(false)
+  const [missedDayInfo, setMissedDayInfo] = useState(null)
 
   // 将 startDate 转换为中国时区显示
   const formatDate = (dateStr) => {
@@ -35,6 +38,37 @@ function Challenge() {
     // 转换为中国时区 (UTC+8)
     const chinaTime = new Date(date.getTime() + 8 * 60 * 60 * 1000);
     return chinaTime.toISOString().split('T')[0];
+  };
+
+  // 格式化日期时间显示
+  const formatDateTime = (date) => {
+    if (!date) return '';
+    const chinaTime = new Date(date.getTime() + 8 * 60 * 60 * 1000);
+    return chinaTime.toISOString().slice(0, 16).replace('T', ' ');
+  };
+
+  // 计算当天截止时间
+  const getDayDeadline = (dayIndex) => {
+    if (!startDate) return null;
+    const start = new Date(startDate + 'T12:00:00');
+    const dayDate = new Date(start);
+    dayDate.setDate(start.getDate() + dayIndex - 1);
+    dayDate.setHours(23, 59, 59, 999);
+    return dayDate;
+  };
+
+  // 计算剩余时间（用于倒计时）
+  const getTimeRemaining = (deadline) => {
+    if (!deadline) return null;
+    const now = new Date();
+    const diff = deadline.getTime() - now.getTime();
+    
+    if (diff <= 0) return { expired: true, hours: 0, minutes: 0 };
+    
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    
+    return { expired: false, hours, minutes };
   };
 
   useEffect(() => {
@@ -165,10 +199,95 @@ function Challenge() {
       }
 
       setDays(daysArray)
+
+      // 5. 检测是否有漏打卡的情况
+      const missedDay = checkForMissedDays(logs, startDateStr)
+      if (missedDay && challengeStatus === 'in_progress') {
+        console.log('⚠️ 检测到漏打卡:', missedDay)
+        setMissedDayInfo(missedDay)
+        setShowResetModal(true)
+      }
     } catch (error) {
       console.error(t('error.fetch_challenge_failed') + ':', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  // 检测是否有超过24小时未打卡的天数
+  const checkForMissedDays = (logs, startDate) => {
+    if (!startDate) return null
+    
+    const today = new Date()
+    const start = new Date(startDate + 'T12:00:00')
+    
+    for (let i = 0; i < 7; i++) {
+      const dayDate = new Date(start)
+      dayDate.setDate(start.getDate() + i)
+      
+      // 跳过未来日期
+      if (dayDate > today) continue
+      
+      const dayLog = logs.find(l => {
+        const logDate = new Date(l.log_date + 'T12:00:00')
+        return logDate.toDateString() === dayDate.toDateString()
+      })
+      
+      // 如果当天没有打卡，且已经超过24小时
+      if (!dayLog) {
+        const deadline = new Date(dayDate)
+        deadline.setHours(23, 59, 59, 999)
+        
+        if (today > deadline) {
+          return {
+            day: i + 1,
+            date: dayDate,
+            deadline: deadline
+          }
+        }
+      }
+    }
+    return null
+  }
+
+  // 重置挑战函数
+  const resetChallenge = async (userId) => {
+    try {
+      console.log('🔄 重置挑战，用户ID:', userId)
+      
+      // 1. 删除该用户所有未审核的打卡记录（保留已通过的记录）
+      const { error: deleteError } = await supabase
+        .from('daily_logs')
+        .delete()
+        .eq('user_id', userId)
+        .neq('status', 'approved')
+      
+      if (deleteError) {
+        console.error('删除打卡记录失败:', deleteError)
+        throw deleteError
+      }
+      
+      // 2. 重置用户挑战状态
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({
+          challenge_status: 'not_started',
+          challenge_start_date: null,
+          challenge_success_date: null
+        })
+        .eq('id', userId)
+      
+      if (updateError) {
+        console.error('重置挑战状态失败:', updateError)
+        throw updateError
+      }
+      
+      console.log('✅ 挑战重置成功')
+      return true
+    } catch (error) {
+      console.error('重置挑战失败:', error)
+      toast.error(t('challenge.reset_failed'))
+      return false
     }
   }
 
@@ -182,6 +301,36 @@ function Challenge() {
     today.setHours(0, 0, 0, 0)
     day8.setHours(0, 0, 0, 0)
     return today >= day8
+  }
+
+  // 处理重置挑战确认
+  const handleConfirmReset = async () => {
+    const { user } = await getCurrentUser()
+    if (!user) return
+    
+    setSubmitting(true)
+    try {
+      const success = await resetChallenge(user.id)
+      if (success) {
+        toast.success(t('challenge.reset_success'))
+        setShowResetModal(false)
+        setMissedDayInfo(null)
+        // 重新加载数据
+        await fetchChallengeData()
+      }
+    } catch (error) {
+      console.error('重置挑战失败:', error)
+      toast.error(t('challenge.reset_failed'))
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  // 取消重置
+  const handleCancelReset = () => {
+    setShowResetModal(false)
+    setMissedDayInfo(null)
+    toast.info(t('challenge.reset_cancelled'))
   }
 
   const handleFinalSubmit = async () => {
@@ -303,6 +452,27 @@ function Challenge() {
                       <span className="text-[10px] md:text-xs text-red-500">{t('challenge.status.rejected')}</span>
                     )}
                   </button>
+                  
+                  {/* 截止时间显示 */}
+                  {(day.status === 'pending' || day.status === 'locked') && !day.hasLog && (
+                    <div className="mt-1">
+                      <div className="text-[9px] md:text-xs text-gray-400">
+                        {t('challenge.deadline')}: {formatDateTime(getDayDeadline(day.day))}
+                      </div>
+                      {day.status === 'pending' && (
+                        <div className="text-[8px] md:text-[10px] text-wimbledon-grass font-medium mt-0.5">
+                          {(() => {
+                            const deadline = getDayDeadline(day.day)
+                            const remaining = getTimeRemaining(deadline)
+                            if (remaining && !remaining.expired) {
+                              return `${remaining.hours}h ${remaining.minutes}m`
+                            }
+                            return ''
+                          })()}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -419,6 +589,45 @@ function Challenge() {
             )}
           </div>
         </div>
+
+        {/* 重置挑战弹窗 */}
+        {showResetModal && missedDayInfo && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl">
+              <div className="text-center mb-6">
+                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-2xl">⚠️</span>
+                </div>
+                <h3 className="text-xl font-bold text-gray-800 mb-2">
+                  {t('challenge.reset_title')}
+                </h3>
+                <p className="text-gray-600">
+                  检测到第{missedDayInfo.day}天（{missedDayInfo.date.toLocaleDateString('zh-CN')}）未在截止时间前打卡
+                </p>
+                <p className="text-sm text-gray-500 mt-2">
+                  挑战已中断，需要重新开始。未审核的记录将被清除。
+                </p>
+              </div>
+              
+              <div className="flex space-x-4">
+                <button
+                  onClick={handleCancelReset}
+                  disabled={submitting}
+                  className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium py-3 rounded-xl transition-colors disabled:opacity-50"
+                >
+                  取消
+                </button>
+                <button
+                  onClick={handleConfirmReset}
+                  disabled={submitting}
+                  className="flex-1 bg-red-600 hover:bg-red-700 text-white font-medium py-3 rounded-xl transition-colors disabled:opacity-50"
+                >
+                  {submitting ? '重置中...' : '重新开始挑战'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
