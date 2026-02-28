@@ -47,15 +47,14 @@ function Challenge() {
     return chinaTime.toISOString().slice(0, 16).replace('T', ' ');
   };
 
-  // 计算当天截止时间
+  // 计算当天截止时间（自然日制：当天23:59:59.999）
   const getDayDeadline = (dayIndex) => {
     if (!startDate) return null;
     
     const start = new Date(startDate + 'T12:00:00');
     const dayDate = new Date(start);
     
-    // 第1天的截止时间是开始日的23:59
-    // 第N天的截止时间是开始日 + (N-1) 天的23:59
+    // 第N天的截止时间是开始日 + (N-1) 天的23:59:59.999
     dayDate.setDate(start.getDate() + (dayIndex - 1));
     dayDate.setHours(23, 59, 59, 999);
     
@@ -163,26 +162,33 @@ function Challenge() {
             // 第1天总是解锁
             status = 'pending'
           } else if (i > 0) {
-            // 检查前一天是否有打卡记录（任何状态）
-            const prevDate = new Date(start)
-            prevDate.setDate(start.getDate() + (i - 1))
-            const prevDateStr = toLocalDateStr(prevDate)
-            const prevLog = logs?.find(l => l.log_date === prevDateStr)
+          // 检查前一天是否有打卡记录（任何状态）
+          const prevDate = new Date(start)
+          prevDate.setDate(start.getDate() + (i - 1))
+          const prevDateStr = toLocalDateStr(prevDate)
+          const prevLog = logs?.find(l => l.log_date === prevDateStr)
+          
+          if (prevLog && prevLog.submitted_at) {
+            // 自然日制：计算次日0:00是否已到
+            const submittedAt = new Date(prevLog.submitted_at)
+            const unlockDate = new Date(submittedAt)
+            unlockDate.setDate(unlockDate.getDate() + 1) // 次日
+            unlockDate.setHours(0, 0, 0, 0) // 0:00:00.000
             
-            if (prevLog && prevLog.submitted_at) {
-              // 计算是否已过24小时（从提交时间起）
-              const submittedTime = new Date(prevLog.submitted_at).getTime()
-              const now = Date.now()
-              const hours24 = 24 * 60 * 60 * 1000
-              if (now - submittedTime >= hours24) {
-                status = 'pending'
-              } else {
-                status = 'locked'
-              }
+            const now = new Date()
+            const today = new Date(now)
+            today.setHours(0, 0, 0, 0)
+            
+            // 如果今天 >= 解锁日期，则解锁
+            if (today >= unlockDate) {
+              status = 'pending'
             } else {
-              // 前一天没有打卡记录，保持锁定
               status = 'locked'
             }
+          } else {
+            // 前一天没有打卡记录，保持锁定
+            status = 'locked'
+          }
           }
         }
 
@@ -227,7 +233,7 @@ function Challenge() {
     }
   }
 
-  // 检测是否有超过24小时未打卡的天数
+  // 检测是否有漏打卡的天数（自然日制：当天23:59前未打卡）
   const checkForMissedDays = (logs, startDate) => {
     if (!startDate) return null
     
@@ -246,7 +252,7 @@ function Challenge() {
         return logDate.toDateString() === dayDate.toDateString()
       })
       
-      // 如果当天没有打卡，且已经超过24小时
+      // 如果当天没有打卡，且已经超过当天23:59
       if (!dayLog) {
         const deadline = new Date(dayDate)
         deadline.setHours(23, 59, 59, 999)
@@ -492,21 +498,55 @@ function Challenge() {
 
             {/* 漏打卡引导提示 - 检测到漏打卡但用户未确认重置时显示 */}
             {missedDayInfo && !showResetModal && challengeStatus === 'in_progress' && (
-              <div className="mt-6 p-6 bg-yellow-50 border border-yellow-200 rounded-xl">
-                <div className="flex items-start">
+              <div className="mt-8 p-6 bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-2xl shadow-sm">
+                <div className="flex flex-col md:flex-row md:items-center gap-4">
                   <div className="flex-shrink-0">
-                    <span className="text-2xl">⚠️</span>
+                    <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
+                      <span className="text-2xl">⚠️</span>
+                    </div>
                   </div>
-                  <div className="ml-4 flex-1">
-                    <p className="text-yellow-800 mb-3">
-                      {t('challenge.missed_guide')}
-                    </p>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-yellow-800 mb-2">
+                      {t('challenge.missed_day_detected', '漏打卡检测')}
+                    </h3>
+                    <div className="space-y-2 text-yellow-700">
+                      <p className="flex items-start">
+                        <span className="inline-block w-5 h-5 bg-yellow-200 rounded-full mr-2 mt-0.5 flex-shrink-0"></span>
+                        {t('challenge.missed_guide')}
+                      </p>
+                      <p className="flex items-start text-sm">
+                        <span className="inline-block w-5 h-5 bg-yellow-200 rounded-full mr-2 mt-0.5 flex-shrink-0"></span>
+                        {t('challenge.missed_tip', '提示：每天记得在24小时内打卡，保持连续记录！')}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex-shrink-0">
                     <button
                       onClick={() => setShowResetModal(true)}
-                      className="bg-yellow-500 hover:bg-yellow-600 text-white font-medium px-6 py-2 rounded-lg transition-colors"
+                      className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white font-medium px-6 py-3 rounded-lg transition-all shadow-md hover:shadow-lg flex items-center"
                     >
+                      <span className="mr-2">🔄</span>
                       {t('challenge.reset_now')}
                     </button>
+                    <p className="text-xs text-yellow-600 mt-2 text-center">
+                      {t('challenge.reset_will_clear', '重置将清除当前进度')}
+                    </p>
+                  </div>
+                </div>
+                
+                {/* 进度指示器 */}
+                <div className="mt-4 pt-4 border-t border-yellow-200">
+                  <div className="flex items-center justify-between text-sm text-yellow-700 mb-2">
+                    <span>{t('challenge.current_progress', '当前进度')}</span>
+                    <span className="font-medium">
+                      {missedDayInfo?.missedDay || 0} / 7 {t('challenge.days', '天')}
+                    </span>
+                  </div>
+                  <div className="w-full bg-yellow-200 rounded-full h-2">
+                    <div
+                      className="bg-yellow-500 h-2 rounded-full transition-all duration-500"
+                      style={{ width: `${((missedDayInfo?.missedDay || 0) / 7) * 100}%` }}
+                    ></div>
                   </div>
                 </div>
               </div>
