@@ -1,9 +1,9 @@
 // Delete test accounts as per Phase 0 requirements
 import { createClient } from '@supabase/supabase-js'
 
-// Supabase configuration
-const SUPABASE_URL = 'https://finjgjjqcyjdaucyxchp.supabase.co'
-const SERVICE_ROLE_KEY = 'sb_secret_VeAjyDXBgQJ1OCSRuE6Tyg_FSt4055V'
+// Supabase configuration - use environment variables
+const SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'https://finjgjjqcyjdaucyxchp.supabase.co'
+const SERVICE_ROLE_KEY = process.env.VITE_SUPABASE_SERVICE_ROLE_KEY || 'YOUR_SERVICE_ROLE_KEY_HERE'
 
 // Create Supabase client with service_role
 const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
