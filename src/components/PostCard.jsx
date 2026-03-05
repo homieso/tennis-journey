@@ -6,6 +6,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { getCurrentUser } from '../lib/auth'
 import { useTranslation } from '../lib/i18n'
+import { canUserInteract, isAdmin, getUserProfile } from '../lib/permissions'
 import toast from 'react-hot-toast'
 
 function PostCard({ post, onLikeUpdate, onCommentUpdate, onRepostUpdate, onDelete }) {
@@ -19,6 +20,8 @@ function PostCard({ post, onLikeUpdate, onCommentUpdate, onRepostUpdate, onDelet
   const [loading, setLoading] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [currentUser, setCurrentUser] = useState(null)
+  const [userProfile, setUserProfile] = useState(null)
+  const [canInteract, setCanInteract] = useState(false)
   
   // 图片相关状态
   const [imageUrls, setImageUrls] = useState([])
@@ -28,15 +31,6 @@ function PostCard({ post, onLikeUpdate, onCommentUpdate, onRepostUpdate, onDelet
   // 转发弹窗状态
   const [showRepostModal, setShowRepostModal] = useState(false)
   const [repostComment, setRepostComment] = useState('')
-
-  // 管理员ID
-  const adminUserId = 'dcee2e34-45f0-4506-9bac-4bdf0956273c'
-  const isAdmin = currentUser?.id === adminUserId
-  
-  // 判断用户权限：管理员或已认证用户
-  const canInteract = currentUser &&
-    (currentUser.id === adminUserId ||
-     currentUser.profile?.is_approved === true);
   
   // 帖子内容行数计算
   const MAX_LINES = 3
@@ -44,13 +38,32 @@ function PostCard({ post, onLikeUpdate, onCommentUpdate, onRepostUpdate, onDelet
   const contentLines = localizedContent ? localizedContent.split('\n').length : 0
   const shouldShowExpand = contentLines > MAX_LINES
   
-  // 获取当前用户
+  // 获取当前用户和用户资料，检查权限
   useEffect(() => {
-    const fetchCurrentUser = async () => {
+    const fetchCurrentUserAndProfile = async () => {
       const { user } = await getCurrentUser()
       setCurrentUser(user)
+      
+      // 如果用户已登录，获取用户资料并检查权限
+      if (user?.id) {
+        try {
+          // 获取用户资料
+          const profile = await getUserProfile(user.id)
+          setUserProfile(profile)
+          
+          // 检查用户权限
+          const hasPermission = await canUserInteract(user, profile)
+          setCanInteract(hasPermission)
+        } catch (error) {
+          console.error('获取用户资料或检查权限失败:', error)
+          setCanInteract(false)
+        }
+      } else {
+        setCanInteract(false)
+        setUserProfile(null)
+      }
     }
-    fetchCurrentUser()
+    fetchCurrentUserAndProfile()
   }, [])
 
   // 当用户或帖子ID变化时检查互动状态

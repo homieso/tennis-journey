@@ -4,9 +4,11 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { signUp } from '../lib/auth'
+import { useTranslation } from '../lib/i18n'
 
 function Register() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -20,14 +22,14 @@ function Register() {
 
     // 密码一致性验证
     if (password !== confirmPassword) {
-      setError('两次输入的密码不一致')
+      setError(t('error.password_mismatch', '两次输入的密码不一致'))
       setLoading(false)
       return
     }
 
     // 密码强度验证（至少6位）
     if (password.length < 6) {
-      setError('密码至少需要6个字符')
+      setError(t('error.password_too_short', '密码至少需要6个字符'))
       setLoading(false)
       return
     }
@@ -53,10 +55,10 @@ function Register() {
           {/* Logo 区域 */}
           <div className="text-center">
             <h1 className="font-wimbledon text-3xl font-bold text-wimbledon-green">
-              Tennis Journey
+              {t('app.name', 'Tennis Journey')}
             </h1>
             <p className="mt-2 text-sm text-gray-600">
-              创建你的账户
+              {t('register.create_account', '创建你的账户')}
             </p>
           </div>
 
@@ -72,7 +74,7 @@ function Register() {
               {/* 邮箱输入 */}
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                  邮箱地址
+                  {t('register.email_label', '邮箱地址')}
                 </label>
                 <input
                   id="email"
@@ -83,14 +85,14 @@ function Register() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="appearance-none relative block w-full px-4 py-3 border border-gray-300 rounded-xl placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-2 focus:ring-wimbledon-grass focus:border-transparent"
-                  placeholder="your@email.com"
+                  placeholder={t('register.email_placeholder', 'your@email.com')}
                 />
               </div>
 
               {/* 密码输入 */}
               <div>
                 <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                  密码
+                  {t('register.password_label', '密码')}
                 </label>
                 <input
                   id="password"
@@ -101,14 +103,14 @@ function Register() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="appearance-none relative block w-full px-4 py-3 border border-gray-300 rounded-xl placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-2 focus:ring-wimbledon-grass focus:border-transparent"
-                  placeholder="至少6个字符"
+                  placeholder={t('register.password_placeholder', '至少6个字符')}
                 />
               </div>
 
               {/* 确认密码 */}
               <div>
                 <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
-                  确认密码
+                  {t('register.confirm_password_label', '确认密码')}
                 </label>
                 <input
                   id="confirmPassword"
@@ -119,7 +121,7 @@ function Register() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   className="appearance-none relative block w-full px-4 py-3 border border-gray-300 rounded-xl placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-2 focus:ring-wimbledon-grass focus:border-transparent"
-                  placeholder="再次输入密码"
+                  placeholder={t('register.confirm_password_placeholder', '再次输入密码')}
                 />
               </div>
             </div>
@@ -131,15 +133,15 @@ function Register() {
                 disabled={loading}
                 className="group relative w-full flex justify-center py-3 px-4 border border-transparent rounded-xl text-white bg-wimbledon-grass hover:bg-wimbledon-green focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-wimbledon-grass transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loading ? '注册中...' : '注册'}
+                {loading ? t('register.registering', '注册中...') : t('register.register_button', '注册')}
               </button>
             </div>
 
             {/* 登录链接 */}
             <div className="text-center text-sm">
-              <span className="text-gray-600">已有账户？</span>
+              <span className="text-gray-600">{t('register.have_account', '已有账户？')}</span>
               <Link to="/login" className="ml-1 font-medium text-wimbledon-green hover:text-wimbledon-grass">
-                立即登录
+                {t('register.login_now', '立即登录')}
               </Link>
             </div>
           </form>

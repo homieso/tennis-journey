@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { getCurrentUser } from '../lib/auth'
 import { useTranslation } from '../lib/i18n'
+import { canUserInteract, isAdmin, getUserProfile } from '../lib/permissions'
 import toast from 'react-hot-toast'
 import EmojiPicker from 'emoji-picker-react'
 import Lightbox from 'yet-another-react-lightbox'
@@ -32,14 +33,8 @@ function CommentSection({ postId, postAuthorId }) {
   const [lightboxIndex, setLightboxIndex] = useState(0)
   const emojiPickerRef = useRef(null)
 
-  // 管理员ID
-  const adminUserId = 'dcee2e34-45f0-4506-9bac-4bdf0956273c'
-  const isAdmin = currentUser?.id === adminUserId
-  
   // 判断用户权限：管理员或已认证用户
-  const canInteract = currentUser &&
-    (currentUser.id === adminUserId ||
-     userProfile?.is_approved === true);
+  const [canInteract, setCanInteract] = useState(false)
 
   // 每页加载的评论数
   const COMMENTS_PER_PAGE = 10
@@ -55,32 +50,32 @@ function CommentSection({ postId, postAuthorId }) {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  // 获取当前用户和用户资料
+  // 获取当前用户和用户资料，检查权限
   useEffect(() => {
-    const fetchCurrentUser = async () => {
+    const fetchCurrentUserAndProfile = async () => {
       const { user } = await getCurrentUser()
       setCurrentUser(user)
       
-      // 如果用户已登录，获取用户资料（包括 is_approved 字段）
+      // 如果用户已登录，获取用户资料并检查权限
       if (user?.id) {
         try {
-          const { data: profile, error } = await supabase
-            .from('profiles')
-            .select('id, username, display_name, avatar_url, location, playing_years, self_rated_ntrp, is_approved')
-            .eq('id', user.id)
-            .single()
+          // 获取用户资料
+          const profile = await getUserProfile(user.id)
+          setUserProfile(profile)
           
-          if (error) {
-            console.error('获取用户资料失败:', error)
-          } else {
-            setUserProfile(profile)
-          }
+          // 检查用户权限
+          const hasPermission = await canUserInteract(user, profile)
+          setCanInteract(hasPermission)
         } catch (error) {
-          console.error('获取用户资料异常:', error)
+          console.error('获取用户资料或检查权限失败:', error)
+          setCanInteract(false)
         }
+      } else {
+        setCanInteract(false)
+        setUserProfile(null)
       }
     }
-    fetchCurrentUser()
+    fetchCurrentUserAndProfile()
   }, [])
 
   const loadComments = async (pageNum = 1, append = false) => {

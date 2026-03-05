@@ -1,0 +1,239 @@
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
+serve(async (req) => {
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders })
+  }
+
+  try {
+    const { user_id } = await req.json()
+    
+    if (!user_id) {
+      return new Response(
+        JSON.stringify({ error: 'user_id is required' }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
+    }
+
+    // Initialize Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
+    const supabase = createClient(supabaseUrl, supabaseKey)
+
+    console.log(`Generating text-only report for user: ${user_id}`)
+
+    // 1. Get user profile
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user_id)
+      .single()
+
+    if (profileError) {
+      throw new Error(`Failed to fetch profile: ${profileError.message}`)
+    }
+
+    // 2. Get user's latest scout report
+    const { data: scoutReport, error: reportError } = await supabase
+      .from('scout_reports')
+      .select('*')
+      .eq('user_id', user_id)
+      .order('generated_at', { ascending: false })
+      .limit(1)
+      .single()
+
+    if (reportError) {
+      throw new Error(`Failed to fetch scout report: ${reportError.message}`)
+    }
+
+    // 3. Get user's 7-day logs
+    const { data: logs, error: logsError } = await supabase
+      .from('daily_logs')
+      .select('*')
+      .eq('user_id', user_id)
+      .eq('status', 'approved')
+      .order('log_date', { ascending: true })
+      .limit(7)
+
+    if (logsError) {
+      throw new Error(`Failed to fetch logs: ${logsError.message}`)
+    }
+
+    if (!logs || logs.length < 7) {
+      throw new Error('User has not completed 7-day challenge')
+    }
+
+    // 4. Parse structured data from scout report
+    let structuredData = {}
+    try {
+      if (scoutReport.structured_data) {
+        structuredData = typeof scoutReport.structured_data === 'string' 
+          ? JSON.parse(scoutReport.structured_data)
+          : scoutReport.structured_data
+      }
+    } catch (e) {
+      console.warn('Failed to parse structured data:', e)
+    }
+
+    // 5. Generate text-only report (always in English as per Phase 1 requirements)
+    const textReport = generateTextReport(profile, structuredData, logs)
+
+    return new Response(
+      JSON.stringify({ 
+        success: true, 
+        text: textReport,
+        user_id,
+        generated_at: new Date().toISOString()
+      }),
+      { 
+        status: 200, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      }
+    )
+
+  } catch (error) {
+    console.error('Error generating text report:', error)
+    
+    return new Response(
+      JSON.stringify({ 
+        success: false, 
+        error: error.message 
+      }),
+      { 
+        status: 500, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      }
+    )
+  }
+})
+
+function generateTextReport(profile, structuredData, logs) {
+  const username = profile.username || profile.email?.split('@')[0] || 'Tennis Player'
+  const gender = profile.gender || 'Not specified'
+  const playingYears = profile.playing_years || 'Unknown'
+  const ntrp = profile.self_rated_ntrp || 'Not rated'
+  const idol = profile.idol || 'Not specified'
+  const style = profile.tennis_style || 'All-court'
+  
+  // Extract highlights from logs
+  const logHighlights = extractLogHighlights(logs)
+  
+  // Extract training suggestions from structured data
+  const suggestions = extractTrainingSuggestions(structuredData)
+  
+  // Generate the text report
+  return `🎾 Tennis Journey Scout Report - Text-Only Edition 🎾
+
+👤 Player Profile:
+• Name: ${username}
+• Gender: ${gender}
+• Playing Experience: ${playingYears} years
+• NTRP Self-Rating: ${ntrp}
+• Tennis Idol: ${idol}
+• Playing Style: ${style}
+
+📊 7-Day Challenge Highlights:
+${logHighlights}
+
+💪 Training Suggestions:
+${suggestions}
+
+🎯 Future Goals:
+1. Improve consistency in match play
+2. Develop a more aggressive net game  
+3. Work on serve placement and power
+4. Increase physical conditioning for longer matches
+
+🔥 Key Takeaways:
+• Your dedication to the 7-day challenge shows strong commitment
+• Focus on translating practice skills to match situations
+• Consider finding a regular hitting partner for consistency
+• Track your progress monthly to see improvement trends
+
+#TennisJourney #ScoutReport #7DayChallenge #TennisImprovement
+
+Generated by Tennis Journey AI Scout • ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`
+}
+
+function extractLogHighlights(logs) {
+  if (!logs || logs.length === 0) {
+    return "• Completed 7 days of consistent training\n• Showed dedication to improvement"
+  }
+  
+  const highlights = []
+  
+  // Count different types of exercises
+  const exerciseTypes = {}
+  logs.forEach(log => {
+    if (log.training_content) {
+      const content = log.training_content.toLowerCase()
+      if (content.includes('forehand') || content.includes('正手')) {
+        exerciseTypes.forehand = (exerciseTypes.forehand || 0) + 1
+      }
+      if (content.includes('backhand') || content.includes('反手')) {
+        exerciseTypes.backhand = (exerciseTypes.backhand || 0) + 1
+      }
+      if (content.includes('serve') || content.includes('发球')) {
+        exerciseTypes.serve = (exerciseTypes.serve || 0) + 1
+      }
+      if (content.includes('volley') || content.includes('截击')) {
+        exerciseTypes.volley = (exerciseTypes.volley || 0) + 1
+      }
+      if (content.includes('footwork') || content.includes('步伐')) {
+        exerciseTypes.footwork = (exerciseTypes.footwork || 0) + 1
+      }
+    }
+  })
+  
+  // Create highlights based on exercise frequency
+  if (exerciseTypes.forehand && exerciseTypes.forehand >= 3) {
+    highlights.push('• Strong focus on forehand development')
+  }
+  if (exerciseTypes.backhand && exerciseTypes.backhand >= 3) {
+    highlights.push('• Dedicated backhand practice sessions')
+  }
+  if (exerciseTypes.serve && exerciseTypes.serve >= 2) {
+    highlights.push('• Consistent serve practice')
+  }
+  if (exerciseTypes.volley && exerciseTypes.volley >= 2) {
+    highlights.push('• Net game improvement focus')
+  }
+  
+  // Add general highlights
+  highlights.push('• Completed all 7 days without missing a session')
+  highlights.push('• Showed progressive improvement throughout the week')
+  
+  return highlights.join('\n')
+}
+
+function extractTrainingSuggestions(structuredData) {
+  const defaultSuggestions = [
+    '• Practice forehand depth control: Aim for deep shots landing within 1 meter of baseline',
+    '• Work on serve placement: Target 4 different zones in service box',
+    '• Improve net reaction: Practice quick volleys with a partner',
+    '• Develop consistency: Rally 20+ shots without error'
+  ]
+  
+  if (!structuredData || !structuredData.training_recommendations) {
+    return defaultSuggestions.join('\n')
+  }
+  
+  const recommendations = structuredData.training_recommendations
+  if (Array.isArray(recommendations)) {
+    return recommendations.map(rec => 
+      `• ${rec.title || 'Training'}: ${rec.description || 'Practice this regularly'}`
+    ).join('\n')
+  }
+  
+  return defaultSuggestions.join('\n')
+}

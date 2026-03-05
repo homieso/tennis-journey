@@ -112,8 +112,13 @@ const translations = {
     'challenge.reset_failed': '重置挑战失败',
     'challenge.reset_cancelled': '已取消重置',
     'challenge.missed_day_reset': '检测到漏打卡，挑战已自动重置',
+    'challenge.missed_day_detected': '漏打卡检测',
     'challenge.missed_guide': '检测到您有一天未在24小时内打卡，挑战已中断。请点击下方按钮重新开始。',
+    'challenge.missed_tip': '提示：每天记得在24小时内打卡，保持连续记录！',
     'challenge.reset_now': '立即重新开始',
+    'challenge.reset_will_clear': '重置将清除当前进度',
+    'challenge.current_progress': '当前进度',
+    'challenge.days': '天',
     
     // 个人主页
     'profile.title': '个人主页',
@@ -995,8 +1000,13 @@ const translations = {
     'challenge.reset_failed': 'Failed to reset challenge',
     'challenge.reset_cancelled': 'Reset cancelled',
     'challenge.missed_day_reset': 'Missed day detected, challenge automatically reset',
+    'challenge.missed_day_detected': 'Missed Day Detected',
     'challenge.missed_guide': 'We detected a missed day (no check-in within 24h). Please click below to restart your challenge.',
+    'challenge.missed_tip': 'Tip: Remember to check in within 24 hours each day to maintain your streak!',
     'challenge.reset_now': 'Restart Now',
+    'challenge.reset_will_clear': 'Reset will clear current progress',
+    'challenge.current_progress': 'Current Progress',
+    'challenge.days': 'days',
     
     // 新增翻译键 - 英文
     'post.publish_success': 'Post published successfully!',
@@ -1398,8 +1408,13 @@ const translations = {
     'challenge.reset_failed': '重置挑戰失敗',
     'challenge.reset_cancelled': '已取消重置',
     'challenge.missed_day_reset': '檢測到漏打卡，挑戰已自動重置',
+    'challenge.missed_day_detected': '漏打卡檢測',
     'challenge.missed_guide': '檢測到您有一天未在24小時內打卡，挑戰已中斷。請點擊下方按鈕重新開始。',
+    'challenge.missed_tip': '提示：每天記得在24小時內打卡，保持連續記錄！',
     'challenge.reset_now': '立即重新開始',
+    'challenge.reset_will_clear': '重置將清除當前進度',
+    'challenge.current_progress': '當前進度',
+    'challenge.days': '天',
 
     // 錯誤消息
     'error.required_photos': '請至少上傳一張訓練照片',
@@ -1446,36 +1461,108 @@ const translations = {
 export const getCurrentLanguage = () => {
   // 1. 优先使用用户保存的语言
   const savedLanguage = localStorage.getItem('preferred_language');
-  console.log('🔍 getCurrentLanguage检查:');
-  console.log('  - localStorage preferred_language:', savedLanguage);
   
-  if (savedLanguage && savedLanguage !== 'undefined') {
-    console.log('✅ 使用用户保存的语言:', savedLanguage);
+  if (savedLanguage && savedLanguage !== 'undefined' && SUPPORTED_LANGUAGES.includes(savedLanguage)) {
     return savedLanguage;
   }
 
-  // 2. 其次根据域名
+  // 2. 其次根据域名检测
   if (typeof window !== 'undefined') {
     const hostname = window.location.hostname;
-    console.log('  - 当前域名:', hostname);
+    const pathname = window.location.pathname;
     
-    if (hostname.includes('tennisjourney.top')) {
-      console.log('✅ 检测到国内版域名，使用简体中文');
-      return 'zh';
-    }
-    if (hostname.includes('tj-7.vercel.app')) {
-      console.log('✅ 检测到国际版域名，使用英文');
-      return 'en';
+    // 域名检测规则（从具体到一般）
+    const domainRules = [
+      // 国内版域名
+      { pattern: 'tennisjourney.top', language: 'zh' },
+      { pattern: 'tennis-journey.vercel.app', language: 'zh' },
+      { pattern: 'localhost', language: 'zh' }, // 本地开发默认中文
+      { pattern: '127.0.0.1', language: 'zh' },
+      
+      // 国际版域名
+      { pattern: 'tj-7.vercel.app', language: 'en' },
+      { pattern: 'tennis-journey-en.vercel.app', language: 'en' },
+      
+      // 繁体中文版域名
+      { pattern: 'tennis-journey-tw.vercel.app', language: 'zh_tw' },
+    ];
+    
+    // 检查域名匹配
+    for (const rule of domainRules) {
+      if (hostname.includes(rule.pattern)) {
+        return rule.language;
+      }
     }
     
-    console.log('⚠️  域名未匹配任何预设规则');
+    // 3. 根据URL路径检测（如果域名不匹配）
+    const pathRules = [
+      { pattern: '/zh/', language: 'zh' },
+      { pattern: '/en/', language: 'en' },
+      { pattern: '/zh_tw/', language: 'zh_tw' },
+      { pattern: '/tw/', language: 'zh_tw' },
+    ];
+    
+    for (const rule of pathRules) {
+      if (pathname.includes(rule.pattern)) {
+        return rule.language;
+      }
+    }
+    
+    // 4. 根据浏览器语言设置检测
+    if (typeof navigator !== 'undefined' && navigator.language) {
+      const browserLanguage = navigator.language.toLowerCase();
+      
+      // 浏览器语言到应用语言的映射
+      const languageMapping = {
+        'zh-cn': 'zh',
+        'zh-hans': 'zh',
+        'zh': 'zh',
+        'zh-tw': 'zh_tw',
+        'zh-hk': 'zh_tw',
+        'zh-mo': 'zh_tw',
+        'en': 'en',
+        'en-us': 'en',
+        'en-gb': 'en',
+        'en-au': 'en',
+        'en-ca': 'en',
+      };
+      
+      // 检查完全匹配
+      if (languageMapping[browserLanguage]) {
+        return languageMapping[browserLanguage];
+      }
+      
+      // 检查前缀匹配（如zh-XX）
+      for (const [key, value] of Object.entries(languageMapping)) {
+        if (browserLanguage.startsWith(key.split('-')[0])) {
+          return value;
+        }
+      }
+    }
+    
+    console.log('⚠️  域名未匹配任何预设规则，使用浏览器语言检测');
   } else {
     console.log('⚠️  window对象未定义（可能是在服务器端渲染）');
   }
 
-  // 3. 最后默认英文
-  console.log('📝 使用默认语言: en');
-  return 'en';
+  // 5. 最后根据时区/地理位置推断
+  if (typeof Intl !== 'undefined') {
+    try {
+      const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      // 中国时区使用中文，其他时区使用英文
+      if (timeZone.includes('Asia/Shanghai') ||
+          timeZone.includes('Asia/Beijing') ||
+          timeZone.includes('Asia/Taipei') ||
+          timeZone.includes('Asia/Hong_Kong')) {
+        return 'zh';
+      }
+    } catch (error) {
+      // 忽略时区检测错误
+    }
+  }
+
+  // 6. 最终默认：简体中文（主要用户群体）
+  return 'zh';
 };
 
 // 设置语言
